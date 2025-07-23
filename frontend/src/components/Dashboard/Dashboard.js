@@ -43,25 +43,25 @@ const Dashboard = () => {
 
   const quickActions = [
     {
-      name: 'New OM',
+      name: 'Nouveau OM',
       icon: DocumentIcon,
       color: 'bg-blue-500',
       href: '/documents/new?type=om_approval'
     },
     {
-      name: 'Send Mail',
+      name: 'Courrier Départ',
       icon: PaperAirplaneIcon,
       color: 'bg-green-500',
-      href: '/documents/new?type=outgoing_mail'
+      href: '/outgoing-mail'
     },
     {
       name: 'DRI Déport',
       icon: ChartBarIcon,
       color: 'bg-purple-500',
-      href: '/documents/new?type=dri_deport'
+      href: '/dri-deport'
     },
     {
-      name: 'Files',
+      name: 'Fichiers',
       icon: FolderIcon,
       color: 'bg-gray-600',
       href: '/file-manager'
