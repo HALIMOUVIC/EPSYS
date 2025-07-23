@@ -23,8 +23,10 @@ const FileManager = () => {
   const fetchDocumentsWithFiles = async () => {
     try {
       const response = await axios.get('/documents');
-      // Filter only documents that have files attached
-      const documentsWithFiles = response.data.filter(doc => doc.file_name);
+      // Filter only documents that have files attached and are from file manager
+      const documentsWithFiles = response.data.filter(doc => 
+        doc.file_name && (doc.metadata?.source === 'file_manager' || doc.document_type === 'general')
+      );
       setDocuments(documentsWithFiles);
     } catch (error) {
       console.error('Failed to fetch documents:', error);
