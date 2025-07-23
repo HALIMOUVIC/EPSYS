@@ -236,15 +236,15 @@ const Dashboard = () => {
 
       {/* Recent Documents Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Outgoing Mail */}
+        {/* Courrier Départ */}
         <div className="bg-white rounded-xl p-6 shadow-lg">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <PaperAirplaneIcon className="w-5 h-5 text-blue-500" />
-              <h3 className="text-lg font-semibold text-gray-900">Outgoing Mail</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Courrier Départ</h3>
             </div>
             <Link to="/outgoing-mail" className="text-blue-600 text-sm hover:text-blue-800">
-              View All →
+              Voir Tout →
             </Link>
           </div>
           
@@ -257,7 +257,7 @@ const Dashboard = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">{doc.title}</p>
                     <p className="text-xs text-gray-500">
-                      {new Date(doc.created_at).toLocaleDateString()}
+                      {new Date(doc.created_at).toLocaleDateString('fr-FR')}
                     </p>
                   </div>
                   <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(doc.status)}`}>
@@ -267,7 +267,7 @@ const Dashboard = () => {
               ))}
             
             {recentDocuments.filter(doc => doc.document_type === 'outgoing_mail').length === 0 && (
-              <p className="text-gray-500 text-sm">No outgoing mail documents</p>
+              <p className="text-gray-500 text-sm">Aucun courrier départ</p>
             )}
           </div>
         </div>
@@ -280,7 +280,7 @@ const Dashboard = () => {
               <h3 className="text-lg font-semibold text-gray-900">DRI Déport</h3>
             </div>
             <Link to="/dri-deport" className="text-indigo-600 text-sm hover:text-indigo-800">
-              View All →
+              Voir Tout →
             </Link>
           </div>
           
@@ -293,7 +293,7 @@ const Dashboard = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">{doc.title}</p>
                     <p className="text-xs text-gray-500">
-                      {new Date(doc.created_at).toLocaleDateString()}
+                      {new Date(doc.created_at).toLocaleDateString('fr-FR')}
                     </p>
                   </div>
                   <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(doc.status)}`}>
@@ -303,20 +303,20 @@ const Dashboard = () => {
               ))}
             
             {recentDocuments.filter(doc => doc.document_type === 'dri_deport').length === 0 && (
-              <p className="text-gray-500 text-sm">No DRI Déport documents</p>
+              <p className="text-gray-500 text-sm">Aucun DRI Déport</p>
             )}
           </div>
         </div>
 
-        {/* Incoming Mail */}
+        {/* Courrier Arrivé */}
         <div className="bg-white rounded-xl p-6 shadow-lg">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <InboxIcon className="w-5 h-5 text-green-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Incoming Mail</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Courrier Arrivé</h3>
             </div>
             <Link to="/incoming-mail" className="text-green-600 text-sm hover:text-green-800">
-              View All →
+              Voir Tout →
             </Link>
           </div>
           
@@ -329,7 +329,7 @@ const Dashboard = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">{doc.title}</p>
                     <p className="text-xs text-gray-500">
-                      {new Date(doc.created_at).toLocaleDateString()}
+                      {new Date(doc.created_at).toLocaleDateString('fr-FR')}
                     </p>
                   </div>
                   <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(doc.status)}`}>
@@ -339,7 +339,7 @@ const Dashboard = () => {
               ))}
             
             {recentDocuments.filter(doc => doc.document_type === 'incoming_mail').length === 0 && (
-              <p className="text-gray-500 text-sm">No incoming mail documents</p>
+              <p className="text-gray-500 text-sm">Aucun courrier arrivé</p>
             )}
           </div>
         </div>
