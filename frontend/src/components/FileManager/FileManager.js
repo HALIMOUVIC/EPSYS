@@ -34,23 +34,18 @@ const FileManager = () => {
   };
 
   const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+    const files = Array.from(event.target.files);
+    if (!files.length) return;
 
     setUploadingFile(true);
     try {
-      // First create a general document
-      const docResponse = await axios.post('/documents', {
-        title: file.name,
-        description: `Uploaded file: ${file.name}`,
-        document_type: 'general'
-      });
-
-      // Then upload the file
+      // Use file manager specific upload endpoint
       const formData = new FormData();
-      formData.append('file', file);
+      files.forEach(file => {
+        formData.append('files', file);
+      });
       
-      await axios.post(`/documents/${docResponse.data.id}/upload`, formData, {
+      const response = await axios.post('/file-manager/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -58,9 +53,12 @@ const FileManager = () => {
 
       // Refresh the documents list
       fetchDocumentsWithFiles();
+      
+      // Show success message
+      alert(`Successfully uploaded ${files.length} file(s) to File Manager`);
     } catch (error) {
-      console.error('Failed to upload file:', error);
-      alert('Failed to upload file');
+      console.error('Failed to upload files:', error);
+      alert('Failed to upload files');
     } finally {
       setUploadingFile(false);
     }
