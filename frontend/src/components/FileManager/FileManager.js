@@ -133,6 +133,7 @@ const FileManager = () => {
           {uploadingFile ? 'Uploading...' : 'Upload File'}
           <input
             type="file"
+            multiple
             onChange={handleFileUpload}
             disabled={uploadingFile}
             className="hidden"
