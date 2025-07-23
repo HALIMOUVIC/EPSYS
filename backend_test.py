@@ -183,7 +183,8 @@ def test_user_login():
     if response and response.status_code == 401:
         results.log_success("Invalid login rejection")
     else:
-        results.log_failure("Invalid login rejection", "Should have rejected invalid credentials")
+        error_detail = f"Status: {response.status_code if response else 'None'}, Response: {response.json() if response else 'None'}"
+        results.log_failure("Invalid login rejection", f"Should have rejected invalid credentials - {error_detail}")
 
 def test_protected_endpoints():
     """Test protected endpoints with authentication"""
