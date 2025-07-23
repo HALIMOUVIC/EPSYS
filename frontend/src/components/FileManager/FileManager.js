@@ -6,7 +6,7 @@ import {
   CloudArrowUpIcon,
   MagnifyingGlassIcon,
   EyeIcon,
-  DownloadIcon,
+  ArrowDownTrayIcon,
   TrashIcon
 } from '@heroicons/react/24/outline';
 
