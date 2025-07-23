@@ -221,7 +221,7 @@ const FileManager = () => {
                       download={document.file_name}
                       className="flex-1 flex items-center justify-center px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors text-xs"
                     >
-                      <DownloadIcon className="w-4 h-4 mr-1" />
+                      <ArrowDownTrayIcon className="w-4 h-4 mr-1" />
                       Download
                     </a>
                     
