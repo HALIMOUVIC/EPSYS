@@ -124,13 +124,13 @@ const Dashboard = () => {
             <div>
               <div className="flex items-center space-x-2">
                 <PaperAirplaneIcon className="w-5 h-5 text-blue-500" />
-                <span className="text-gray-600 text-sm font-medium">Outgoing Mail</span>
+                <span className="text-gray-600 text-sm font-medium">Courrier Départ</span>
               </div>
               <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.outgoing_mail || 0}</p>
               <div className="flex items-center mt-2">
                 <span className="text-blue-600 text-sm font-medium">documents</span>
                 <ArrowUpIcon className="w-4 h-4 text-green-500 ml-2" />
-                <span className="text-green-600 text-sm">9%</span>
+                <span className="text-green-600 text-sm">+9%</span>
               </div>
             </div>
           </div>
@@ -141,13 +141,13 @@ const Dashboard = () => {
             <div>
               <div className="flex items-center space-x-2">
                 <InboxIcon className="w-5 h-5 text-green-500" />
-                <span className="text-gray-600 text-sm font-medium">Incoming Mail</span>
+                <span className="text-gray-600 text-sm font-medium">Courrier Arrivé</span>
               </div>
               <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.incoming_mail || 0}</p>
               <div className="flex items-center mt-2">
                 <span className="text-green-600 text-sm font-medium">documents</span>
                 <ArrowUpIcon className="w-4 h-4 text-green-500 ml-2" />
-                <span className="text-green-600 text-sm">6%</span>
+                <span className="text-green-600 text-sm">+6%</span>
               </div>
             </div>
           </div>
