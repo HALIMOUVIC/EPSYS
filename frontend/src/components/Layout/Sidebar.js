@@ -22,9 +22,9 @@ const Sidebar = () => {
 
   const navigationItems = [
     { name: 'Dashboard', href: '/', icon: HomeIcon },
-    { name: 'Outgoing Mail', href: '/outgoing-mail', icon: PaperAirplaneIcon },
-    { name: 'Incoming Mail', href: '/incoming-mail', icon: InboxIcon },
-    { name: 'OM Approval', href: '/om-approval', icon: DocumentCheckIcon },
+    { name: 'Courrier Départ', href: '/outgoing-mail', icon: PaperAirplaneIcon },
+    { name: 'Courrier Arrivé', href: '/incoming-mail', icon: InboxIcon },
+    { name: 'Approbation OM', href: '/om-approval', icon: DocumentCheckIcon },
     { name: 'DRI Déport', href: '/dri-deport', icon: ChartBarIcon },
     { name: 'File Manager', href: '/file-manager', icon: FolderIcon },
     { name: 'Messages', href: '/messages', icon: ChatBubbleLeftIcon },
