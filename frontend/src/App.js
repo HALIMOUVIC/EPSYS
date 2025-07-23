@@ -9,6 +9,8 @@ import Dashboard from "./components/Dashboard/Dashboard";
 import DocumentList from "./components/Documents/DocumentList";
 import DocumentForm from "./components/Documents/DocumentForm";
 import DocumentView from "./components/Documents/DocumentView";
+import CourrierDepartList from "./components/Documents/CourrierDepartList";
+import CourrierArriveeList from "./components/Documents/CourrierArriveeList";
 import Messages from "./components/Messages/Messages";
 import FileManager from "./components/FileManager/FileManager";
 import UserManagement from "./components/UserManagement/UserManagement";
@@ -102,12 +104,7 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <MainLayout>
-                <DocumentList
-                  documentType="outgoing_mail"
-                  title="Outgoing Mail"
-                  icon={PaperAirplaneIcon}
-                  color="text-blue-600"
-                />
+                <CourrierDepartList />
               </MainLayout>
             </ProtectedRoute>
           }
@@ -118,12 +115,7 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <MainLayout>
-                <DocumentList
-                  documentType="incoming_mail"
-                  title="Incoming Mail"
-                  icon={InboxIcon}
-                  color="text-green-600"
-                />
+                <CourrierArriveeList />
               </MainLayout>
             </ProtectedRoute>
           }
