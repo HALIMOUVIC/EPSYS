@@ -417,7 +417,7 @@ async def delete_document(
     
     return {"message": "Document deleted successfully"}
 
-# File Upload Route - Updated to handle multiple files
+# File Upload Route - Updated to handle multiple files with organized folders
 @api_router.post("/documents/{document_id}/upload")
 async def upload_files(
     document_id: str,
@@ -434,6 +434,9 @@ async def upload_files(
     if current_user.role != UserRole.ADMIN and current_user.id != doc_obj.created_by:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
+    # Get appropriate upload folder based on document type
+    upload_folder = get_upload_folder(doc_obj.document_type)
+    
     uploaded_files = []
     total_size = 0
     
@@ -445,10 +448,10 @@ async def upload_files(
         
         total_size += len(content)
         
-        # Create file path
+        # Create file path in appropriate folder
         file_extension = file.filename.split(".")[-1] if "." in file.filename else ""
         unique_filename = f"{document_id}_{uuid.uuid4()}.{file_extension}"
-        file_path = UPLOADS_DIR / unique_filename
+        file_path = upload_folder / unique_filename
         
         # Save file
         async with aiofiles.open(file_path, 'wb') as f:
