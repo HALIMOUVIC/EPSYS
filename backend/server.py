@@ -174,7 +174,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             detail="Token expired",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except jwt.JWTError:
+    except Exception:  # Catch all JWT-related exceptions
         raise credentials_exception
     
     user = await db.users.find_one({"username": username})
