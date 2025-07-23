@@ -482,9 +482,51 @@ async def upload_files(
         
         await db.documents.update_one({"id": document_id}, {"$set": update_data})
     
+# File Manager Upload Route - Separate from documents
+@api_router.post("/file-manager/upload")
+async def upload_file_manager_files(
+    files: List[UploadFile] = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    # Get file manager upload folder
+    upload_folder = get_upload_folder('file_manager')
+    
+    uploaded_files = []
+    
+    for file in files:
+        # Check file size (10MB limit per file)
+        content = await file.read()
+        if len(content) > 10 * 1024 * 1024:  # 10MB
+            raise HTTPException(status_code=400, detail=f"File {file.filename} is too large (max 10MB)")
+        
+        # Create unique filename
+        file_extension = file.filename.split(".")[-1] if "." in file.filename else ""
+        unique_filename = f"fm_{uuid.uuid4()}.{file_extension}"
+        file_path = upload_folder / unique_filename
+        
+        # Save file
+        async with aiofiles.open(file_path, 'wb') as f:
+            await f.write(content)
+        
+        # Create a general document entry for file manager files
+        document = Document(
+            title=file.filename,
+            description=f"File Manager upload: {file.filename}",
+            document_type='general',
+            created_by=current_user.id,
+            file_path=str(file_path),
+            file_name=file.filename,
+            file_size=len(content),
+            mime_type=file.content_type,
+            metadata={"source": "file_manager"}
+        )
+        
+        await db.documents.insert_one(document.dict())
+        uploaded_files.append(document)
+    
     return {
-        "message": f"Successfully uploaded {len(uploaded_files)} file(s)", 
-        "files": [f["original_name"] for f in uploaded_files]
+        "message": f"Successfully uploaded {len(uploaded_files)} file(s) to File Manager", 
+        "files": [doc.dict() for doc in uploaded_files]
     }
 
 # Dashboard Statistics Route
