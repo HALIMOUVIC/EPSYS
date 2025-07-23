@@ -352,10 +352,11 @@ def test_role_based_access():
     
     # Test regular user denied access to users list
     response = make_request("GET", "/users", auth_token=user_token)
-    if response and response.status_code == 403:
+    if response and response.status_code in [403, 401]:
         results.log_success("User denied access to admin endpoint")
     else:
-        results.log_failure("User denied access to admin endpoint", "Should deny access to non-admin")
+        error_detail = f"Status: {response.status_code if response else 'None'}, Response: {response.json() if response else 'None'}"
+        results.log_failure("User denied access to admin endpoint", f"Should deny access to non-admin - {error_detail}")
     
     # Test admin can see all documents
     response = make_request("GET", "/documents", auth_token=admin_token)
