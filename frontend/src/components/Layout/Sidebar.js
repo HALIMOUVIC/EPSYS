@@ -34,7 +34,7 @@ const Sidebar = () => {
 
   const adminItems = [
     { name: 'User Management', href: '/user-management', icon: UsersIcon },
-    { name: 'Settings', href: '/settings', icon: CogIcon },
+    { name: 'Paramètres', href: '/settings', icon: CogIcon },
   ];
 
   const isActiveLink = (href) => {
