@@ -90,6 +90,7 @@ class Token(BaseModel):
 
 class Document(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    reference: Optional[str] = None  # Auto-generated reference like DEP-2025-001
     title: str
     description: Optional[str] = None
     document_type: DocumentType
