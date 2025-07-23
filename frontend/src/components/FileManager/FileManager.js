@@ -171,6 +171,7 @@ const FileManager = () => {
                 Upload File
                 <input
                   type="file"
+                  multiple
                   onChange={handleFileUpload}
                   className="hidden"
                   accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif"
