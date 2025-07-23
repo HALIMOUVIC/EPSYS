@@ -253,17 +253,17 @@ frontend:
           agent: "main"
           comment: "Implemented complete authentication system with beautiful login/register forms matching EPSys design, JWT token management, protected routes, and user context management"
 
-  - task: "Additional Features"
+  - task: "French Forms Implementation"
     implemented: true
     working: true
-    file: "Messages.js, FileManager.js, UserManagement.js, Settings.js"
+    file: "CourrierDepartForm.js, CourrierArriveeForm.js, CourrierDepartList.js, CourrierArriveeList.js"
     stuck_count: 0
-    priority: "medium"
+    priority: "high"
     needs_retesting: true
     status_history:
         - working: true
           agent: "main"
-          comment: "Implemented messaging system, file manager with upload/download, user management (admin), and comprehensive settings page with notifications, security, and system configuration"
+          comment: "Implemented specialized French forms for Courrier Départ (Date départ, Expéditeur, Destinataire, Objet) and Courrier Arrivé (Date réception, Expéditeur, Référence Expéditeur, Date Courrier, Destinataire, Objet) with proper file upload, tables with French column headers, and modal forms matching PHP structure"
 
 metadata:
   created_by: "main_agent"
