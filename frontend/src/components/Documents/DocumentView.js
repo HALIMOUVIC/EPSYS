@@ -6,7 +6,7 @@ import {
   DocumentIcon,
   PencilIcon,
   TrashIcon,
-  DownloadIcon,
+  ArrowDownTrayIcon,
   UserIcon,
   CalendarIcon,
   TagIcon,
