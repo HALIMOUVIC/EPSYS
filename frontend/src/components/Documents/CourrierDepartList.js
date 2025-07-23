@@ -171,7 +171,7 @@ const CourrierDepartList = () => {
               {filteredDocuments.map((doc) => (
                 <tr key={doc.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    DEP-{new Date(doc.created_at).getFullYear()}-{String(doc.id).padStart(4, '0')}
+                    {doc.reference || `DEP-${new Date(doc.created_at).getFullYear()}-${String(doc.id).padStart(3, '0')}`}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {doc.metadata?.date_depart ? formatDate(doc.metadata.date_depart) : formatDate(doc.created_at)}
