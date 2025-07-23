@@ -139,56 +139,98 @@ def test_user_login():
     """Test user login and JWT token generation"""
     print("\n🔐 Testing User Login...")
     
-    # Test admin login
-    admin_login = {
-        "username": "sarah_admin",
-        "password": "SecurePass123!"
+    # Get the usernames from the global variables set during registration
+    admin_username = None
+    user_username = None
+    
+    # We need to extract usernames from the registration data
+    # Since we can't access the registration data directly, we'll use a different approach
+    # Let's create new users for login testing
+    unique_suffix = str(uuid.uuid4())[:8]
+    
+    # Create admin user for login test
+    admin_data = {
+        "username": f"login_admin_{unique_suffix}",
+        "email": f"login_admin_{unique_suffix}@epsys.com",
+        "password": "SecurePass123!",
+        "full_name": "Login Admin",
+        "role": "admin"
     }
     
-    response = make_request("POST", "/login", admin_login)
+    response = make_request("POST", "/register", admin_data)
     if response and response.status_code == 200:
-        global admin_token
-        data = response.json()
-        admin_token = data["access_token"]
-        if data["token_type"] == "bearer" and "user" in data:
-            results.log_success("Admin login with JWT token")
+        admin_username = admin_data["username"]
+        global admin_user_id
+        admin_user_id = response.json()["id"]
+    
+    # Create regular user for login test
+    user_data = {
+        "username": f"login_user_{unique_suffix}",
+        "email": f"login_user_{unique_suffix}@epsys.com",
+        "password": "UserPass456!",
+        "full_name": "Login User",
+        "role": "user"
+    }
+    
+    response = make_request("POST", "/register", user_data)
+    if response and response.status_code == 200:
+        user_username = user_data["username"]
+        global user_user_id
+        user_user_id = response.json()["id"]
+    
+    # Test admin login
+    if admin_username:
+        admin_login = {
+            "username": admin_username,
+            "password": "SecurePass123!"
+        }
+        
+        response = make_request("POST", "/login", admin_login)
+        if response and response.status_code == 200:
+            global admin_token
+            data = response.json()
+            admin_token = data["access_token"]
+            if data["token_type"] == "bearer" and "user" in data:
+                results.log_success("Admin login with JWT token")
+            else:
+                results.log_failure("Admin login with JWT token", "Invalid token response format")
         else:
-            results.log_failure("Admin login with JWT token", "Invalid token response format")
-    else:
-        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
-        results.log_failure("Admin login with JWT token", error_msg)
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("Admin login with JWT token", error_msg)
     
     # Test regular user login
-    user_login = {
-        "username": "john_clerk",
-        "password": "UserPass456!"
-    }
-    
-    response = make_request("POST", "/login", user_login)
-    if response and response.status_code == 200:
-        global user_token
-        data = response.json()
-        user_token = data["access_token"]
-        if data["token_type"] == "bearer" and "user" in data:
-            results.log_success("User login with JWT token")
+    if user_username:
+        user_login = {
+            "username": user_username,
+            "password": "UserPass456!"
+        }
+        
+        response = make_request("POST", "/login", user_login)
+        if response and response.status_code == 200:
+            global user_token
+            data = response.json()
+            user_token = data["access_token"]
+            if data["token_type"] == "bearer" and "user" in data:
+                results.log_success("User login with JWT token")
+            else:
+                results.log_failure("User login with JWT token", "Invalid token response format")
         else:
-            results.log_failure("User login with JWT token", "Invalid token response format")
-    else:
-        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
-        results.log_failure("User login with JWT token", error_msg)
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("User login with JWT token", error_msg)
     
     # Test invalid login
-    invalid_login = {
-        "username": "sarah_admin",
-        "password": "wrongpassword"
-    }
-    
-    response = make_request("POST", "/login", invalid_login)
-    if response and response.status_code == 401:
-        results.log_success("Invalid login rejection")
-    else:
-        error_detail = f"Status: {response.status_code if response else 'None'}, Response: {response.json() if response else 'None'}"
-        results.log_failure("Invalid login rejection", f"Should have rejected invalid credentials - {error_detail}")
+    if admin_username:
+        invalid_login = {
+            "username": admin_username,
+            "password": "wrongpassword"
+        }
+        
+        response = make_request("POST", "/login", invalid_login)
+        if response and response.status_code == 401:
+            results.log_success("Invalid login rejection")
+        else:
+            error_detail = f"Status: {response.status_code if response else 'None'}, Response: {response.json() if response else 'None'}"
+            results.log_failure("Invalid login rejection", f"Should have rejected invalid credentials - {error_detail}")
 
 def test_protected_endpoints():
     """Test protected endpoints with authentication"""
