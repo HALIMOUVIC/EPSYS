@@ -88,10 +88,13 @@ def test_user_registration():
     """Test user registration functionality"""
     print("\n🔧 Testing User Registration...")
     
+    # Generate unique usernames to avoid conflicts
+    unique_suffix = str(uuid.uuid4())[:8]
+    
     # Test admin user registration
     admin_data = {
-        "username": "sarah_admin",
-        "email": "sarah.admin@epsys.com",
+        "username": f"admin_{unique_suffix}",
+        "email": f"admin_{unique_suffix}@epsys.com",
         "password": "SecurePass123!",
         "full_name": "Sarah Johnson",
         "role": "admin"
@@ -108,8 +111,8 @@ def test_user_registration():
     
     # Test regular user registration
     user_data = {
-        "username": "john_clerk",
-        "email": "john.clerk@epsys.com", 
+        "username": f"user_{unique_suffix}",
+        "email": f"user_{unique_suffix}@epsys.com", 
         "password": "UserPass456!",
         "full_name": "John Smith",
         "role": "user"
