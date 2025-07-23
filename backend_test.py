@@ -128,7 +128,8 @@ def test_user_registration():
     if response and response.status_code == 400:
         results.log_success("Duplicate username rejection")
     else:
-        results.log_failure("Duplicate username rejection", "Should have rejected duplicate username")
+        error_detail = f"Status: {response.status_code if response else 'None'}, Response: {response.json() if response else 'None'}"
+        results.log_failure("Duplicate username rejection", f"Should have rejected duplicate username - {error_detail}")
 
 def test_user_login():
     """Test user login and JWT token generation"""
