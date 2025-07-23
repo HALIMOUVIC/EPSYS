@@ -258,7 +258,7 @@ const DocumentView = () => {
                     download={document.file_name}
                     className="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                   >
-                    <DownloadIcon className="w-4 h-4 mr-2" />
+                    <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
                     Download
                   </a>
                 </div>
