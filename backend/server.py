@@ -1,15 +1,20 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field
-from typing import List
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional, Dict, Any
 import uuid
-from datetime import datetime
-
+from datetime import datetime, timedelta
+import bcrypt
+import jwt
+import aiofiles
+from enum import Enum
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -19,41 +24,446 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app without a prefix
-app = FastAPI()
+# Create uploads directory
+UPLOADS_DIR = ROOT_DIR / "uploads"
+UPLOADS_DIR.mkdir(exist_ok=True)
+
+# Create the main app
+app = FastAPI(title="EPSys Document Management", version="1.0.0")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# JWT Configuration
+SECRET_KEY = os.environ.get("JWT_SECRET", "your-secret-key-change-in-production")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# Define Models
-class StatusCheck(BaseModel):
+# Security
+security = HTTPBearer()
+
+# Enums
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    USER = "user"
+
+class DocumentStatus(str, Enum):
+    DRAFT = "draft"
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    COMPLETED = "completed"
+
+class DocumentType(str, Enum):
+    OUTGOING_MAIL = "outgoing_mail"
+    INCOMING_MAIL = "incoming_mail"
+    OM_APPROVAL = "om_approval"
+    DRI_DEPORT = "dri_deport"
+    GENERAL = "general"
+
+# Models
+class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    username: str
+    email: EmailStr
+    full_name: str
+    role: UserRole = UserRole.USER
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class UserCreate(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+    full_name: str
+    role: UserRole = UserRole.USER
 
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
+class UserLogin(BaseModel):
+    username: str
+    password: str
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: User
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
+class Document(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    description: Optional[str] = None
+    document_type: DocumentType
+    status: DocumentStatus = DocumentStatus.DRAFT
+    file_path: Optional[str] = None
+    file_name: Optional[str] = None
+    file_size: Optional[int] = None
+    mime_type: Optional[str] = None
+    created_by: str  # user_id
+    assigned_to: Optional[str] = None  # user_id
+    tags: List[str] = []
+    metadata: Dict[str, Any] = {}
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    due_date: Optional[datetime] = None
+
+class DocumentCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    document_type: DocumentType
+    assigned_to: Optional[str] = None
+    tags: List[str] = []
+    metadata: Dict[str, Any] = {}
+    due_date: Optional[datetime] = None
+
+class DocumentUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[DocumentStatus] = None
+    assigned_to: Optional[str] = None
+    tags: Optional[List[str]] = None
+    metadata: Optional[Dict[str, Any]] = None
+    due_date: Optional[datetime] = None
+
+class Message(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    subject: str
+    content: str
+    sender_id: str
+    recipient_id: str
+    document_id: Optional[str] = None
+    is_read: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class MessageCreate(BaseModel):
+    subject: str
+    content: str
+    recipient_id: str
+    document_id: Optional[str] = None
+
+# Utility Functions
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except jwt.JWTError:
+        raise credentials_exception
+    
+    user = await db.users.find_one({"username": username})
+    if user is None:
+        raise credentials_exception
+    
+    return User(**user)
+
+async def get_admin_user(current_user: User = Depends(get_current_user)):
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    return current_user
+
+# Authentication Routes
+@api_router.post("/register", response_model=User)
+async def register(user_data: UserCreate):
+    # Check if username exists
+    existing_user = await db.users.find_one({"username": user_data.username})
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already registered"
+        )
+    
+    # Check if email exists
+    existing_email = await db.users.find_one({"email": user_data.email})
+    if existing_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Hash password and create user
+    hashed_password = hash_password(user_data.password)
+    user_dict = user_data.dict()
+    del user_dict["password"]
+    
+    user = User(**user_dict)
+    user_doc = {**user.dict(), "password": hashed_password}
+    
+    await db.users.insert_one(user_doc)
+    return user
+
+@api_router.post("/login", response_model=Token)
+async def login(user_data: UserLogin):
+    user = await db.users.find_one({"username": user_data.username})
+    if not user or not verify_password(user_data.password, user["password"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    if not user["is_active"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Inactive user"
+        )
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user["username"]}, expires_delta=access_token_expires
+    )
+    
+    user_obj = User(**user)
+    return Token(access_token=access_token, token_type="bearer", user=user_obj)
+
+@api_router.get("/me", response_model=User)
+async def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+# Document Routes
+@api_router.post("/documents", response_model=Document)
+async def create_document(
+    document_data: DocumentCreate,
+    current_user: User = Depends(get_current_user)
+):
+    document = Document(**document_data.dict(), created_by=current_user.id)
+    await db.documents.insert_one(document.dict())
+    return document
+
+@api_router.get("/documents", response_model=List[Document])
+async def get_documents(
+    document_type: Optional[DocumentType] = None,
+    status: Optional[DocumentStatus] = None,
+    current_user: User = Depends(get_current_user)
+):
+    query = {}
+    if document_type:
+        query["document_type"] = document_type
+    if status:
+        query["status"] = status
+    
+    # Users can only see their own documents unless they're admin
+    if current_user.role != UserRole.ADMIN:
+        query["$or"] = [
+            {"created_by": current_user.id},
+            {"assigned_to": current_user.id}
+        ]
+    
+    documents = await db.documents.find(query).sort("created_at", -1).to_list(100)
+    return [Document(**doc) for doc in documents]
+
+@api_router.get("/documents/{document_id}", response_model=Document)
+async def get_document(
+    document_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    document = await db.documents.find_one({"id": document_id})
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    doc_obj = Document(**document)
+    
+    # Check permissions
+    if current_user.role != UserRole.ADMIN and current_user.id != doc_obj.created_by and current_user.id != doc_obj.assigned_to:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    return doc_obj
+
+@api_router.put("/documents/{document_id}", response_model=Document)
+async def update_document(
+    document_id: str,
+    document_data: DocumentUpdate,
+    current_user: User = Depends(get_current_user)
+):
+    document = await db.documents.find_one({"id": document_id})
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    doc_obj = Document(**document)
+    
+    # Check permissions
+    if current_user.role != UserRole.ADMIN and current_user.id != doc_obj.created_by:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    update_data = {k: v for k, v in document_data.dict().items() if v is not None}
+    update_data["updated_at"] = datetime.utcnow()
+    
+    await db.documents.update_one({"id": document_id}, {"$set": update_data})
+    
+    updated_document = await db.documents.find_one({"id": document_id})
+    return Document(**updated_document)
+
+@api_router.delete("/documents/{document_id}")
+async def delete_document(
+    document_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    document = await db.documents.find_one({"id": document_id})
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    doc_obj = Document(**document)
+    
+    # Check permissions
+    if current_user.role != UserRole.ADMIN and current_user.id != doc_obj.created_by:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    await db.documents.delete_one({"id": document_id})
+    
+    # Delete file if exists
+    if doc_obj.file_path and os.path.exists(doc_obj.file_path):
+        os.remove(doc_obj.file_path)
+    
+    return {"message": "Document deleted successfully"}
+
+# File Upload Route
+@api_router.post("/documents/{document_id}/upload")
+async def upload_file(
+    document_id: str,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    document = await db.documents.find_one({"id": document_id})
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    doc_obj = Document(**document)
+    
+    # Check permissions
+    if current_user.role != UserRole.ADMIN and current_user.id != doc_obj.created_by:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    # Create file path
+    file_extension = file.filename.split(".")[-1] if "." in file.filename else ""
+    unique_filename = f"{document_id}_{uuid.uuid4()}.{file_extension}"
+    file_path = UPLOADS_DIR / unique_filename
+    
+    # Save file
+    async with aiofiles.open(file_path, 'wb') as f:
+        content = await file.read()
+        await f.write(content)
+    
+    # Update document with file info
+    update_data = {
+        "file_path": str(file_path),
+        "file_name": file.filename,
+        "file_size": len(content),
+        "mime_type": file.content_type,
+        "updated_at": datetime.utcnow()
+    }
+    
+    await db.documents.update_one({"id": document_id}, {"$set": update_data})
+    
+    return {"message": "File uploaded successfully", "filename": file.filename}
+
+# Dashboard Statistics Route
+@api_router.get("/dashboard/stats")
+async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
+    # Query based on user role
+    if current_user.role == UserRole.ADMIN:
+        query = {}
+    else:
+        query = {"$or": [{"created_by": current_user.id}, {"assigned_to": current_user.id}]}
+    
+    # Get document counts by type
+    outgoing_count = await db.documents.count_documents({**query, "document_type": DocumentType.OUTGOING_MAIL})
+    incoming_count = await db.documents.count_documents({**query, "document_type": DocumentType.INCOMING_MAIL})
+    om_approval_count = await db.documents.count_documents({**query, "document_type": DocumentType.OM_APPROVAL})
+    dri_deport_count = await db.documents.count_documents({**query, "document_type": DocumentType.DRI_DEPORT})
+    
+    # Get completion stats
+    total_docs = await db.documents.count_documents(query)
+    completed_docs = await db.documents.count_documents({**query, "status": DocumentStatus.COMPLETED})
+    efficiency = round((completed_docs / total_docs * 100) if total_docs > 0 else 0, 1)
+    
+    # Get unread messages
+    unread_messages = await db.messages.count_documents({"recipient_id": current_user.id, "is_read": False})
+    
+    return {
+        "outgoing_mail": outgoing_count,
+        "incoming_mail": incoming_count,
+        "om_approval": om_approval_count,
+        "dri_deport": dri_deport_count,
+        "efficiency": efficiency,
+        "unread_messages": unread_messages,
+        "total_documents": total_docs
+    }
+
+# Messages Routes
+@api_router.post("/messages", response_model=Message)
+async def create_message(
+    message_data: MessageCreate,
+    current_user: User = Depends(get_current_user)
+):
+    message = Message(**message_data.dict(), sender_id=current_user.id)
+    await db.messages.insert_one(message.dict())
+    return message
+
+@api_router.get("/messages", response_model=List[Message])
+async def get_messages(
+    current_user: User = Depends(get_current_user)
+):
+    messages = await db.messages.find({
+        "$or": [
+            {"sender_id": current_user.id},
+            {"recipient_id": current_user.id}
+        ]
+    }).sort("created_at", -1).to_list(100)
+    
+    return [Message(**msg) for msg in messages]
+
+@api_router.put("/messages/{message_id}/read")
+async def mark_message_read(
+    message_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    message = await db.messages.find_one({"id": message_id, "recipient_id": current_user.id})
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    await db.messages.update_one({"id": message_id}, {"$set": {"is_read": True}})
+    return {"message": "Message marked as read"}
+
+# Users Management Routes (Admin only)
+@api_router.get("/users", response_model=List[User])
+async def get_users(admin_user: User = Depends(get_admin_user)):
+    users = await db.users.find().to_list(100)
+    return [User(**user) for user in users]
 
 # Include the router in the main app
 app.include_router(api_router)
+
+# Serve uploaded files
+app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
