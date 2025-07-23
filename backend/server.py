@@ -345,11 +345,11 @@ async def delete_document(
     
     return {"message": "Document deleted successfully"}
 
-# File Upload Route
+# File Upload Route - Updated to handle multiple files
 @api_router.post("/documents/{document_id}/upload")
-async def upload_file(
+async def upload_files(
     document_id: str,
-    file: UploadFile = File(...),
+    files: List[UploadFile] = File(...),
     current_user: User = Depends(get_current_user)
 ):
     document = await db.documents.find_one({"id": document_id})
@@ -362,28 +362,55 @@ async def upload_file(
     if current_user.role != UserRole.ADMIN and current_user.id != doc_obj.created_by:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
-    # Create file path
-    file_extension = file.filename.split(".")[-1] if "." in file.filename else ""
-    unique_filename = f"{document_id}_{uuid.uuid4()}.{file_extension}"
-    file_path = UPLOADS_DIR / unique_filename
+    uploaded_files = []
+    total_size = 0
     
-    # Save file
-    async with aiofiles.open(file_path, 'wb') as f:
+    for file in files:
+        # Check file size (10MB limit per file)
         content = await file.read()
-        await f.write(content)
+        if len(content) > 10 * 1024 * 1024:  # 10MB
+            raise HTTPException(status_code=400, detail=f"File {file.filename} is too large (max 10MB)")
+        
+        total_size += len(content)
+        
+        # Create file path
+        file_extension = file.filename.split(".")[-1] if "." in file.filename else ""
+        unique_filename = f"{document_id}_{uuid.uuid4()}.{file_extension}"
+        file_path = UPLOADS_DIR / unique_filename
+        
+        # Save file
+        async with aiofiles.open(file_path, 'wb') as f:
+            await f.write(content)
+        
+        uploaded_files.append({
+            "original_name": file.filename,
+            "file_path": str(file_path),
+            "file_size": len(content),
+            "mime_type": file.content_type
+        })
     
-    # Update document with file info
-    update_data = {
-        "file_path": str(file_path),
-        "file_name": file.filename,
-        "file_size": len(content),
-        "mime_type": file.content_type,
-        "updated_at": datetime.utcnow()
+    # Update document with file info (for now, we'll store the first file for compatibility)
+    if uploaded_files:
+        first_file = uploaded_files[0]
+        update_data = {
+            "file_path": first_file["file_path"],
+            "file_name": first_file["original_name"],
+            "file_size": first_file["file_size"],
+            "mime_type": first_file["mime_type"],
+            "updated_at": datetime.utcnow()
+        }
+        
+        # Store all files in metadata
+        current_metadata = doc_obj.metadata or {}
+        current_metadata["uploaded_files"] = uploaded_files
+        update_data["metadata"] = current_metadata
+        
+        await db.documents.update_one({"id": document_id}, {"$set": update_data})
+    
+    return {
+        "message": f"Successfully uploaded {len(uploaded_files)} file(s)", 
+        "files": [f["original_name"] for f in uploaded_files]
     }
-    
-    await db.documents.update_one({"id": document_id}, {"$set": update_data})
-    
-    return {"message": "File uploaded successfully", "filename": file.filename}
 
 # Dashboard Statistics Route
 @api_router.get("/dashboard/stats")
