@@ -320,7 +320,14 @@ async def create_document(
     document_data: DocumentCreate,
     current_user: User = Depends(get_current_user)
 ):
-    document = Document(**document_data.dict(), created_by=current_user.id)
+    # Generate reference number
+    reference = await generate_reference(document_data.document_type)
+    
+    document = Document(
+        **document_data.dict(), 
+        created_by=current_user.id,
+        reference=reference
+    )
     await db.documents.insert_one(document.dict())
     return document
 
