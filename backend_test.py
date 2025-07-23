@@ -207,14 +207,16 @@ def test_protected_endpoints():
     if response and response.status_code == 401:
         results.log_success("Protected endpoint without token rejection")
     else:
-        results.log_failure("Protected endpoint without token rejection", "Should require authentication")
+        error_detail = f"Status: {response.status_code if response else 'None'}, Response: {response.json() if response else 'None'}"
+        results.log_failure("Protected endpoint without token rejection", f"Should require authentication - {error_detail}")
     
     # Test /me endpoint with invalid token
     response = make_request("GET", "/me", auth_token="invalid_token")
     if response and response.status_code == 401:
         results.log_success("Protected endpoint with invalid token rejection")
     else:
-        results.log_failure("Protected endpoint with invalid token rejection", "Should reject invalid token")
+        error_detail = f"Status: {response.status_code if response else 'None'}, Response: {response.json() if response else 'None'}"
+        results.log_failure("Protected endpoint with invalid token rejection", f"Should reject invalid token - {error_detail}")
 
 def test_document_management():
     """Test document CRUD operations"""
