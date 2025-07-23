@@ -140,12 +140,76 @@ class MessageCreate(BaseModel):
     recipient_id: str
     document_id: Optional[str] = None
 
+class DocumentCounter(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    document_type: str
+    year: int
+    counter: int = 1
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
 # Utility Functions
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def verify_password(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+
+async def generate_reference(document_type: str) -> str:
+    """Generate reference number like DEP-2025-001"""
+    current_year = datetime.now().year
+    
+    # Define prefixes for each document type
+    prefixes = {
+        'outgoing_mail': 'DEP',
+        'incoming_mail': 'ARR', 
+        'dri_depart': 'DRI',
+        'om_approval': 'OM'
+    }
+    
+    prefix = prefixes.get(document_type, 'DOC')
+    
+    # Find or create counter for this document type and year
+    counter_doc = await db.document_counters.find_one({
+        "document_type": document_type,
+        "year": current_year
+    })
+    
+    if not counter_doc:
+        # Create new counter for this type and year
+        counter = DocumentCounter(
+            document_type=document_type,
+            year=current_year,
+            counter=1
+        )
+        await db.document_counters.insert_one(counter.dict())
+        current_counter = 1
+    else:
+        # Increment existing counter
+        current_counter = counter_doc["counter"] + 1
+        await db.document_counters.update_one(
+            {"document_type": document_type, "year": current_year},
+            {"$set": {"counter": current_counter}}
+        )
+    
+    # Format reference: PREFIX-YYYY-001
+    reference = f"{prefix}-{current_year}-{current_counter:03d}"
+    return reference
+
+def get_upload_folder(document_type: str) -> Path:
+    """Get appropriate upload folder based on document type"""
+    folders = {
+        'outgoing_mail': 'depart',
+        'incoming_mail': 'arrive',
+        'dri_depart': 'dri_depart',
+        'om_approval': 'om_approval',
+        'file_manager': 'file_manager',
+        'general': 'general'
+    }
+    
+    folder_name = folders.get(document_type, 'general')
+    folder_path = UPLOADS_DIR / folder_name
+    folder_path.mkdir(exist_ok=True)
+    return folder_path
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
