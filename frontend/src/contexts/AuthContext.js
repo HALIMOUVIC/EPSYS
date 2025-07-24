@@ -182,17 +182,19 @@ export const AuthProvider = ({ children }) => {
   };
 
   const handleSessionExpiry = () => {
-    console.log('handleSessionExpiry called - starting logout process');
+    console.log('handleSessionExpiry called - showing beautiful modal');
     
     // Clean logout
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     setUser(null);
     
-    // Show alert
-    alert(`Votre session a expiré après ${sessionTimeout} minute(s) d'inactivité. Veuillez vous reconnecter.`);
-    
-    // Force redirect to login page
+    // Show beautiful session expired modal
+    setShowSessionExpiredModal(true);
+  };
+
+  const handleLoginRedirect = () => {
+    setShowSessionExpiredModal(false);
     window.location.href = '/login';
   };
 
