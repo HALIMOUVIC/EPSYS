@@ -228,7 +228,10 @@ const DRIDepartViewModal = ({ document, isOpen, onClose }) => {
                           <div className="flex space-x-2">
                             {canPreview(file.original_name) && (
                               <button
-                                onClick={() => handlePreview(file)}
+                                onClick={() => {
+                                  console.log('Preview button clicked for:', file.original_name);
+                                  handlePreview(file);
+                                }}
                                 className="p-2 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
                                 title="Prévisualiser"
                               >
