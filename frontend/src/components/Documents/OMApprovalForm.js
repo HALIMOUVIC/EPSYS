@@ -39,11 +39,60 @@ const OMApprovalForm = ({ onClose, onSave }) => {
   // }, [user]);
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
     setError('');
+    
+    // If matricule changed, fetch employee data
+    if (name === 'matricule' && value.trim() !== '') {
+      fetchEmployeeData(value.trim());
+    } else if (name === 'matricule' && value.trim() === '') {
+      // Clear fields if matricule is empty
+      setFormData(prev => ({
+        ...prev,
+        fullName: '',
+        jobTitle: '',
+        division: '',
+        itineraire: ''
+      }));
+    }
+  };
+
+  const fetchEmployeeData = async (matricule) => {
+    setEmployeeLoading(true);
+    try {
+      const response = await axios.get(`/employees/${matricule}`);
+      const employeeData = response.data;
+      
+      // Auto-populate form fields with employee data
+      setFormData(prev => ({
+        ...prev,
+        fullName: employeeData.fullName,
+        jobTitle: employeeData.jobTitle,
+        division: employeeData.division,
+        itineraire: employeeData.itineraire
+      }));
+    } catch (error) {
+      console.error('Error fetching employee data:', error);
+      if (error.response?.status === 404) {
+        // Clear fields if employee not found
+        setFormData(prev => ({
+          ...prev,
+          fullName: '',
+          jobTitle: '',
+          division: '',
+          itineraire: ''
+        }));
+        setError('Employé non trouvé pour ce matricule');
+      } else {
+        setError('Erreur lors de la récupération des données employé');
+      }
+    } finally {
+      setEmployeeLoading(false);
+    }
   };
 
   const validateForm = () => {
