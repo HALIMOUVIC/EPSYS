@@ -357,9 +357,19 @@ const Settings = () => {
                 onBlur={(e) => handleInputChange('session_timeout_minutes', parseInt(e.target.value))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                La session expirera automatiquement après {settings.session_timeout_minutes} minute(s) d'inactivité.
-              </p>
+              <div className="mt-2 text-xs text-gray-600">
+                <p>La session expirera automatiquement après {settings.session_timeout_minutes} minute(s) d'inactivité.</p>
+                {remainingTime !== null && remainingTime > 0 && (
+                  <p className="text-blue-600 font-medium mt-1">
+                    ⏱️ Temps restant: {remainingTime} minute(s)
+                  </p>
+                )}
+                {remainingTime !== null && remainingTime <= 0 && (
+                  <p className="text-red-600 font-medium mt-1">
+                    ⚠️ Session expirée - Vous serez déconnecté(e)
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="pt-4 border-t border-gray-200">
