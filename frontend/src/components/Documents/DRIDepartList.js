@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
 import DRIDepartForm from './DRIDepartForm';
+import DRIDepartViewModal from './DRIDepartViewModal';
+import { PlusIcon, HashtagIcon, WrenchScrewdriverIcon, EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 const DRIDepartList = () => {
   const { user } = useAuth();
