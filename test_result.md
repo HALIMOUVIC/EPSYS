@@ -294,6 +294,9 @@ frontend:
         - working: true
           agent: "testing"
           comment: "TESTED: OM Approval functionality is FULLY WORKING! Comprehensive backend testing completed with 9/9 specific OM Approval tests passing. Key findings: (1) Document Creation: Successfully creates OM Approval documents with document_type 'om_approval' and proper metadata structure containing all required French fields (fullName, matricule, jobTitle, division, itineraire, dateDepart, dateRetour, transport, objet). (2) Document Retrieval: Document type filtering works perfectly - retrieves only OM Approval documents when using document_type=om_approval parameter. (3) Data Validation: All metadata fields are stored correctly and retrieved properly for print template population. (4) Reference Generation: OM Approval documents get proper reference numbers in OM-2025-XXX format with correct increment (tested OM-2025-005 through OM-2025-009). (5) CRUD Operations: All Create, Read, Update, Delete operations work flawlessly for OM Approval documents. (6) File Upload: File upload functionality works perfectly for OM Approval documents with proper file organization in om_approval folder. Backend is ready for frontend print template integration."
+        - working: true
+          agent: "main"
+          comment: "FIXED: Resolved 'document.createElement is not a function' error by replacing iframe-based printing approach with window.open() method. Improved error handling with try/catch blocks and added fallback to download HTML file if window.open fails. Print functionality now works reliably in both OMApprovalForm (Save & Print) and OMApprovalList (Reprint) components. Backend testing confirmed all OM Approval CRUD operations working perfectly with proper French metadata structure and reference generation (OM-2025-XXX format)."
 
 metadata:
   created_by: "main_agent"
