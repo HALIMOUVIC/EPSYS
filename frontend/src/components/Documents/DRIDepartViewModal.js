@@ -1,5 +1,5 @@
-import React from 'react';
-import { XMarkIcon, DocumentTextIcon, UserIcon, CalendarIcon, PaperAirplaneIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
+import React, { useState } from 'react';
+import { XMarkIcon, DocumentTextIcon, UserIcon, CalendarIcon, PaperAirplaneIcon, BuildingOfficeIcon, EyeIcon } from '@heroicons/react/24/outline';
 
 const DRIDepartViewModal = ({ document, isOpen, onClose }) => {
   if (!isOpen || !document) return null;
