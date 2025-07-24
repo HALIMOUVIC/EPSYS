@@ -50,13 +50,13 @@ const OMApprovalForm = ({ onClose, onSave }) => {
     if (name === 'matricule' && value.trim() !== '') {
       fetchEmployeeData(value.trim());
     } else if (name === 'matricule' && value.trim() === '') {
-      // Clear fields if matricule is empty
+      // Clear auto-populated fields if matricule is empty (but keep itineraire)
       setFormData(prev => ({
         ...prev,
         fullName: '',
         jobTitle: '',
-        division: '',
-        itineraire: ''
+        division: ''
+        // itineraire is kept as user entered
       }));
     }
   };
