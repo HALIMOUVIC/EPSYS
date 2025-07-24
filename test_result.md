@@ -222,6 +222,21 @@ backend:
           agent: "testing"
           comment: "TESTED: DRI Depart frontend functionality is FULLY WORKING! Comprehensive testing completed with all 8 major test categories passing successfully. Key findings: (1) Navigation Test: DRI Départ link in sidebar works perfectly and navigates to correct page (/dri-depart). (2) DRI Depart List Page: Page loads correctly with proper title 'DRI Départ', subtitle 'Gestion des courriers DRI départ', 'Nouveau Courrier' button, and all French column headers (Référence, Date Départ, Expéditeur, Réf. Expéditeur, Date Courrier, Destinataire, Objet, Fichiers, Actions). (3) DRI Depart Form: Form modal opens correctly with all required fields (Date de départ, Expéditeur, Référence Expéditeur, Date du courrier, Destinataire, Objet), file upload area with drag & drop support, and proper form buttons. (4) Form Validation: Required field validation working correctly - empty forms cannot be submitted. (5) Document Creation Workflow: Complete workflow functional - form fills correctly, submits successfully, generates proper reference numbers (DRI-2025-XXX format), and documents appear in list immediately. (6) Document Display: Documents display correctly with proper date formatting (DD/MM/YYYY), reference numbers, and action buttons (Edit, Delete). (7) Edit Functionality: Edit button opens form correctly (though pre-population needs minor improvement). (8) Responsive Design: Works perfectly on desktop (1920px), tablet (768px), and mobile (390px) views. Fixed critical API routing issue where requests were going to /api/api/documents/dri-depart instead of /api/documents/dri-depart due to double prefix. All functionality now works exactly like the PHP version with proper French labels, seamless document management workflow, and excellent user experience."
 
+  - task: "Enhanced File Manager Backend APIs"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Need to implement comprehensive File Manager backend with folder management, user tracking, and enhanced file operations"
+        - working: false
+          agent: "main"
+          comment: "Implemented comprehensive File Manager backend APIs: (1) Added Folder and FileItem models with user tracking (created_by, uploaded_by_name). (2) Created folder CRUD operations (/api/file-manager/folders with GET, POST, PUT, DELETE). (3) Enhanced file upload with folder support (/api/file-manager/upload). (4) Added file deletion and download endpoints. (5) Implemented search functionality across files and folders. (6) Added helper functions for recursive folder operations and path management. (7) Maintained backward compatibility with legacy upload route. Ready for testing to verify all new endpoints work correctly."
+
   - task: "UI Layout and Navigation"
     implemented: true
     working: true
