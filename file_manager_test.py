@@ -14,7 +14,7 @@ import uuid
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://b760dca1-4a93-4338-b6c3-a79bea95d81c.preview.emergentagent.com/api"
+BACKEND_URL = "https://6e6f4ea9-c21b-44f0-8abc-bb8f0d6ee7ee.preview.emergentagent.com/api"
 HEADERS = {"Content-Type": "application/json"}
 
 class TestResults:
