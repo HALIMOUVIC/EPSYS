@@ -146,7 +146,7 @@ const CourrierArriveeViewModal = ({ document, isOpen, onClose }) => {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white">Détails du Courrier Arrivé</h2>
-                  <p className="text-green-100 text-sm">Référence: {document.reference}</p>
+                  <p className="text-green-100 text-sm">Référence: {document.reference || `ARR-${new Date(document.created_at).getFullYear()}-${String(document.id).padStart(3, '0')}`}</p>
                 </div>
               </div>
               <button
