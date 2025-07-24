@@ -13,7 +13,8 @@ import {
   DocumentChartBarIcon,
   UsersIcon,
   CogIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  UserIcon
 } from '@heroicons/react/24/outline';
 
 const Sidebar = () => {
