@@ -60,8 +60,8 @@ def make_request(method, endpoint, data=None, headers=None, files=None, auth_tok
     if headers:
         request_headers.update(headers)
     
-    # Remove Content-Type for file uploads
-    if files:
+    # Remove Content-Type for file uploads or form data
+    if files or (method == "PUT" and data and not isinstance(data, dict)):
         request_headers.pop("Content-Type", None)
     
     try:
@@ -69,12 +69,15 @@ def make_request(method, endpoint, data=None, headers=None, files=None, auth_tok
             response = requests.get(url, headers=request_headers, timeout=10)
         elif method == "POST":
             if files:
-                response = requests.post(url, files=files, headers=request_headers, timeout=10)
+                response = requests.post(url, files=files, data=data, headers=request_headers, timeout=10)
             else:
                 response = requests.post(url, json=data, headers=request_headers, timeout=10)
         elif method == "PUT":
             if files:
-                response = requests.put(url, files=files, headers=request_headers, timeout=10)
+                response = requests.put(url, files=files, data=data, headers=request_headers, timeout=10)
+            elif data and not isinstance(data, dict):
+                # For form data
+                response = requests.put(url, data=data, headers=request_headers, timeout=10)
             else:
                 response = requests.put(url, json=data, headers=request_headers, timeout=10)
         elif method == "DELETE":
