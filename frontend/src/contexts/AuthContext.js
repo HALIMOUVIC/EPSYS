@@ -250,7 +250,6 @@ export const AuthProvider = ({ children }) => {
     loading,
     updateSessionTimeout,
     sessionTimeout,
-    lastActivity,
     getRemainingTime,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin'
