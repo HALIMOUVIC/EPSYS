@@ -110,6 +110,17 @@ const Settings = () => {
     }, 500);
   };
 
+  const handleSignupToggle = async (enabled) => {
+    try {
+      const response = await axios.put(`${backendUrl}/api/settings/signup-toggle?enabled=${enabled}`);
+      showAlert('success', 'Succès', `Inscription ${enabled ? 'autorisée' : 'bloquée'} avec succès`);
+      fetchSystemInfo(); // Refresh system info
+    } catch (error) {
+      console.error('Failed to toggle signup:', error);
+      showAlert('error', 'Erreur', 'Échec de la modification du paramètre');
+    }
+  };
+
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     
