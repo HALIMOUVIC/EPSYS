@@ -340,39 +340,28 @@ const OMApprovalList = () => {
       `;
 
       // Use a more reliable approach for printing
-      try {
-        // Open a new window for printing
-        const printWindow = window.open('', '_blank', 'width=800,height=600');
+      const newWindow = window.open('', '_blank');
+      if (newWindow) {
+        newWindow.document.write(printContent);
+        newWindow.document.close();
+        newWindow.focus();
         
-        if (printWindow) {
-          printWindow.document.write(printContent);
-          printWindow.document.close();
-          
-          // Wait for content to load, then print
-          printWindow.onload = function() {
-            setTimeout(() => {
-              printWindow.print();
-              // Close window after printing
-              setTimeout(() => {
-                printWindow.close();
-              }, 1000);
-            }, 500);
-          };
-        } else {
-          // Fallback: create a blob and download  
-          const blob = new Blob([printContent], { type: 'text/html' });
-          const url = URL.createObjectURL(blob);
-          const link = window.document.createElement('a');
-          link.href = url;
-          link.download = `Ordre_Mission_${document.metadata.fullName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
-          window.document.body.appendChild(link);
-          link.click();
-          window.document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-        }
-      } catch (error) {
-        console.error('Print error:', error);
-        alert('Erreur lors de l\'impression. Veuillez réessayer.');
+        // Trigger print dialog
+        setTimeout(() => {
+          newWindow.print();
+        }, 1000);
+      } else {
+        // Fallback: create downloadable HTML file  
+        const blob = new Blob([printContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Ordre_Mission_${document.metadata.fullName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('Document téléchargé. Ouvrez le fichier HTML pour l\'imprimer.');
       }
     }
   };
