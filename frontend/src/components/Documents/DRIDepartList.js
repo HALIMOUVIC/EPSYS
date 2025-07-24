@@ -183,10 +183,7 @@ const DRIDepartList = () => {
             <thead className="bg-indigo-100/80">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-indigo-700 uppercase tracking-wider">
-                  <div className="flex items-center space-x-2">
-                    <HashtagIcon className="w-4 h-4" />
-                    <span>Référence</span>
-                  </div>
+                  Référence
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-indigo-700 uppercase tracking-wider">
                   Date Départ
@@ -210,10 +207,7 @@ const DRIDepartList = () => {
                   Fichiers
                 </th>
                 <th className="px-6 py-3 text-center text-xs font-semibold text-indigo-700 uppercase tracking-wider">
-                  <div className="flex items-center justify-center space-x-2">
-                    <WrenchScrewdriverIcon className="w-4 h-4" />
-                    <span>Actions</span>
-                  </div>
+                  Actions
                 </th>
               </tr>
             </thead>
