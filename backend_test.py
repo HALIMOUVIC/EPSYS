@@ -2277,6 +2277,10 @@ def run_all_tests():
         test_file_manager_renaming()
         test_file_manager_preview()
         
+        # NEW: Calendar and Settings tests
+        test_calendar_management()
+        test_user_settings()
+        
         # Role-based access tests
         test_role_based_access()
         
