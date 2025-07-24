@@ -204,29 +204,6 @@ export const AuthProvider = ({ children }) => {
     return Math.ceil(remainingMs / (60 * 1000)); // Return remaining minutes
   };
 
-  const checkAuthStatus = async () => {
-    try {
-      const token = localStorage.getItem('authToken');
-      const storedUser = localStorage.getItem('user');
-      
-      if (token && storedUser) {
-        setUser(JSON.parse(storedUser));
-        
-        // Verify token is still valid
-        const response = await axios.get('/me');
-        if (response.data) {
-          setUser(response.data);
-          localStorage.setItem('user', JSON.stringify(response.data));
-        }
-      }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      logout();
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const login = async (credentials) => {
     try {
       const response = await axios.post('/login', credentials);
