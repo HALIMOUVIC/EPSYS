@@ -26,6 +26,7 @@ const Settings = () => {
   const [saving, setSaving] = useState(false);
   const [systemInfo, setSystemInfo] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [remainingTime, setRemainingTime] = useState(null);
   const [passwordForm, setPasswordForm] = useState({
     current_password: '',
     new_password: '',
