@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import { ModernAlertContainer } from "./components/Common/ModernAlert";
 import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
 import MainLayout from "./components/Layout/MainLayout";
