@@ -692,9 +692,9 @@ async def upload_files(
         
         await db.documents.update_one({"id": document_id}, {"$set": update_data})
     
-# File Manager Upload Route - Separate from documents
-@api_router.post("/file-manager/upload")
-async def upload_file_manager_files(
+# File Manager Upload Route - Updated for backward compatibility
+@api_router.post("/file-manager/upload-legacy")
+async def upload_file_manager_files_legacy(
     files: List[UploadFile] = File(...),
     current_user: User = Depends(get_current_user)
 ):
@@ -718,7 +718,7 @@ async def upload_file_manager_files(
         async with aiofiles.open(file_path, 'wb') as f:
             await f.write(content)
         
-        # Create a general document entry for file manager files
+        # Create a general document entry for file manager files (legacy compatibility)
         document = Document(
             title=file.filename,
             description=f"File Manager upload: {file.filename}",
