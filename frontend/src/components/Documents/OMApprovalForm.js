@@ -585,8 +585,11 @@ const OMApprovalForm = ({ onClose, onSave }) => {
             value={formData.itineraire}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            placeholder="Lieu de la mission"
+            readOnly={formData.matricule && formData.itineraire}
+            className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+              formData.matricule && formData.itineraire ? 'bg-gray-50' : ''
+            }`}
+            placeholder="Itinéraire sera rempli automatiquement"
           />
         </div>
 
