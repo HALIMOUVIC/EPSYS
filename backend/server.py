@@ -148,6 +148,17 @@ class DocumentCounter(BaseModel):
     counter: int = 1
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+class Employee(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    matricule: str
+    full_name: str
+    full_name1: str
+    job_title: str
+    division: str
+    itineraire: str
+    service: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
 # Utility Functions
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
