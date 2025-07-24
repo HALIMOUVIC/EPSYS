@@ -189,15 +189,19 @@ const CourrierArriveeList = () => {
             <CourrierArriveeForm
               isEdit={!!editingDocument}
               documentId={editingDocument?.id}
-              onClose={() => {
-                setShowForm(false);
-                setEditingDocument(null);
-              }}
+              onClose={handleFormClose}
               onSave={handleFormSave}
             />
           </div>
         </div>
       )}
+
+      {/* View Modal */}
+      <CourrierArriveeViewModal
+        document={viewingDocument}
+        isOpen={showViewModal}
+        onClose={handleViewClose}
+      />
 
       {/* Search */}
       <div className="bg-white rounded-xl p-6 shadow-lg">
