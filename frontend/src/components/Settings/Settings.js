@@ -102,6 +102,11 @@ const Settings = () => {
   const handleInputChange = async (key, value) => {
     if (!settings) return;
     
+    // Handle language change specially
+    if (key === 'language') {
+      changeLanguage(value);
+    }
+    
     // Update local state immediately for better UX
     setSettings({...settings, [key]: value});
     
