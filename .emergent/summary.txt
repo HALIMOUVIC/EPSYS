@@ -1,77 +1,88 @@
 <analysis>
-The previous AI engineer successfully developed the EPSys document management system from an initial MVP, progressively adding features based on user feedback. The trajectory details the implementation of core document workflows like Courrier Départ, Courrier Arrivé, OM Approvals, and DRI Départ, each with auto-generated references and dedicated storage. A significant focus was on refining OM Approval print functionality and integrating employee data auto-population. More recently, the engineer undertook a major overhaul of the File Manager, adding sophisticated features like user-tracked folder and file management, renaming, and preview capabilities, alongside significant UI/UX enhancements and French localization. Subsequently, a comprehensive Calendar system with event management and a revamped Settings page were introduced, leading to the current task of further refining Calendar delete functionality, ensuring all settings work, creating a dedicated Profile page, and implementing document counter and signup management within settings. The work flow is iterative, with the engineer frequently testing and obtaining user confirmation.
+The AI engineer successfully built the EPSys document management system, starting with core document workflows and then enhancing modules like File Manager, Calendar, and Settings. The trajectory shows an iterative development process, with the engineer addressing user feedback systematically. Key technical efforts included implementing auto-generated references, refining printing, and significant UI/UX overhauls. Recent work focused on improving Calendar deletion, ensuring full Settings functionality, and creating a dedicated Profile page. The engineer also addressed critical issues like session management (fixing auto-logout and redirect), improving UI consistency (modernizing alerts, icons, and buttons), and resolving file download/preview errors by aligning frontend API calls with backend endpoints and addressing file path issues. The work consistently involved debugging, testing, and adapting to user-reported issues.
 </analysis>
 
 <product_requirements>
-The EPSys application aims to digitize and manage various document types with specific workflows, providing user authentication and role-based access. It supports diverse file types (PDFs, Word, images, Excel) with local storage. Implemented workflows include:
--   **Courrier Départ:** Form, list,  references,  storage.
--   **Courrier Arrivé:** Form, list,  references,  storage.
--   **DRI Départ:** Form, list,  references,  storage, mirroring a PHP app.
--   **Approbation OM:** Form,  references,  storage, precise printable HTML output (A4, Sonatrach logo), auto-population of employee data by matricule (excluding ).
-**File Manager:** Supports folder creation/editing, file uploads (with user tracking), deletion, renaming, search, hierarchical browsing, and file preview, mirroring a PHP file manager with enhanced UI/UX, custom alerts, and navigation.
-**Calendar:** A comprehensive system for event management (create, edit, delete), with month/week/day views and a professional UI.
-**Settings:** Comprehensive system for user preferences (notifications, security), system configuration, with the addition of auto-incrementing document counters and signup lock/unlock.
-**Profile:** A dedicated page for user information, including photo and privacy settings, separated from general settings. All UI is in French.
+The EPSys application is designed to digitize and manage various document types with distinct workflows, supporting user authentication, role-based access, and diverse file types (PDFs, Word, images, Excel) stored locally. Key implemented workflows include:
+-   **Courrier Départ**: Form and list views with  references, stored in .
+-   **Courrier Arrivé**: Form and list views with  references, stored in .
+-   **DRI Départ**: Form and list views with  references, stored in , mirroring a legacy PHP application.
+-   **Approbation OM**: Form for  references, stored in , featuring precise printable HTML output (A4, Sonatrach logo) and auto-population of employee data.
+-   **File Manager**: Provides hierarchical folder/file browsing, CRUD operations (create, edit, delete), user tracking, renaming, search, and file preview, with enhanced UI/UX and custom alerts.
+-   **Calendar**: A comprehensive system for event management (create, edit, delete), supporting month/week/day views and a professional UI.
+-   **Settings**: Manages user preferences (notifications, security), system configurations, document counters, and signup lock/unlock.
+-   **Profile**: A dedicated page for user information, photo, and privacy settings, separated from general settings. The entire UI is localized to French.
 </product_requirements>
 
 <key_technical_concepts>
--   **Full-Stack Architecture:** React.js (frontend), FastAPI (backend), MongoDB (database).
--   **State Management:** React Context API ().
--   **Styling:** Tailwind CSS.
--   **API Design:** RESTful APIs ( prefix), file uploads, CRUD.
--   **File Management:** Local storage (), dedicated folders.
--   **Auto-Incrementing References:** Backend logic for unique document references.
--   **Environment Variables:** Strict usage (, ).
--   **Print Functionality:** Client-side HTML generation, .
--   **Data Auto-population:** Frontend fetching employee data from backend.
--   **User Tracking:** Attribution of file/folder creation/upload to specific users.
+-   **Full-Stack Architecture:** React.js (frontend), FastAPI (backend), MongoDB.
+-   **State Management:** React Context API (, ).
+-   **Styling:** Tailwind CSS, Heroicons.
+-   **API Design:** RESTful APIs ( prefix), file uploads, CRUD, secure file serving.
+-   **File Management:** Local storage, path handling, blob URLs.
+-   **Authentication:** JWT-based, session management with inactivity timeout.
+-   **Internationalization:** Multi-language support with RTL for Arabic.
 </key_technical_concepts>
 
 <code_architecture>
-The application uses a standard full-stack React.js (frontend) and FastAPI (backend) architecture with MongoDB.
+The application uses a standard full-stack React.js (frontend) and FastAPI (backend) architecture with MongoDB as the database.
 
 
 
--   : Core FastAPI application. Expanded with models/endpoints for Employee, DRI Depart, comprehensive File Manager (folder/file CRUD, user tracking, renaming, preview), Calendar (event CRUD), and Settings (user preferences, password, system info, document counters, signup management). Crucial for all data operations.
--   : Script to seed employee data.
--   : Defines application routing. Updated with routes for , , , , and .
--   : Main navigation. Updated links for DRI Départ, File Manager, Calendar, and Profile.
--   : OM Approval document creation. Updated print, employee data auto-population, and print template.
--   : OM Approval list. Updated reprinting functionality.
--   : New component for DRI Depart form. Handles form fields and multi-file upload.
--   : New component for DRI Depart list. Displays documents with pagination.
--   : Major enhancement. Implemented hierarchical folder/file browsing, creation, editing, deletion, user tracking, file renaming, file preview, custom alerts, and improved UI.
--   : Newly created. Implemented event creation, editing, and deletion (work in progress for deletion), month/week/day views, and a comprehensive event modal.
--   : Enhanced to integrate with backend settings APIs, updated to manage notifications, system preferences, and will include document counters and signup lock/unlock. Profile section removed to a dedicated page.
--   : Newly created. Intended for user profile management including photo, personal info, and privacy settings.
--   : Log of implemented features and testing outcomes. Continuously updated with backend and frontend test summaries, including for File Manager, Calendar, and Settings.
+-   : The core FastAPI application. Contains endpoints for all document types (Courrier Départ/Arrivé, OM Approval, DRI Depart), File Manager, Calendar, and Settings.
+    -   **Changes**: A new endpoint  was added for general document downloads/previews, with path traversal protection and JWT authentication. File path extraction logic was refined for consistency.
+-   : Defines application routing and integrates global providers.
+    -   **Changes**: Updated to include routes for  and wrapped with  and .
+-   : Manages user authentication state and session.
+    -   **Changes**: Enhanced with robust activity-based session timeout (using  to prevent re-renders), automatic logout, redirect to login, and integrated . Debugging logs were added and then removed.
+-   : New context for managing application language and translations.
+    -   **Changes**: Created to handle multi-language support (FR, EN, ES, AR including RTL), storing preferences in localStorage, and providing a translation function.
+-   : Main navigation component.
+    -   **Changes**: Updated with  import. The Mon Profil link was added, and the user section was moved to the bottom with a hover-activated dropdown for Profile and Logout options, using translations from .
+-   : Configuration and preferences page.
+    -   **Changes**: Fixed missing  import. The Confidentialité section was removed (moved to Profile). Signup toggle and system preferences (language, theme) functionality were fixed. Session timeout input was integrated with  and later, debug buttons and status displays were added and subsequently removed.
+-   : Dedicated user profile management page.
+    -   **Changes**: Newly created component to house user photo, personal information, and privacy settings (Confidentialité section moved from Settings with enhanced radio button options).
+-   : New component for modern, styled alerts.
+    -   **Changes**: Created to replace native browser  and  calls with a customizable, animated, and auto-dismissing alert system (success, error, confirmation types).
+-   : New component for the session expiry alert.
+    -   **Changes**: Created as a beautiful, branded modal with a countdown timer and a Se reconnecter maintenant button to replace the basic session expiry alert.
+-   : Displays a list of DRI Depart documents.
+    -   **Changes**: Icons (, ) were adjusted/removed from table headers.  (View),  (Edit), and  (Delete) were introduced for action buttons. The Nouveau Courrier button was transformed into a floating action button. Modern alerts were integrated for operations. File download/preview API calls were fixed to use correct endpoint and path extraction.
+-   : New component to view DRI Depart document details.
+    -   **Changes**: Created to display document details with a fixed height and no scrollbar. File preview functionality for PDFs, images, and text files was implemented, along with a download option. API call for preview was fixed for consistency.
+-   : Log of implemented features and testing outcomes. Continuously updated with backend and frontend test summaries.
+-   : List view for outgoing mail documents.
+    -   **Changes**: Currently being updated to adopt the modern design patterns (icons, floating button, modern alerts, view modal) as seen in .
+-   : New component for viewing Courrier Depart documents.
+    -   **Changes**: Newly created to support detailed viewing for Courrier Depart, mirroring .
+-   : List view for incoming mail documents.
+    -   **Changes**: Scheduled for design updates similar to .
+-   : New component for viewing Courrier Arrivee documents.
+    -   **Changes**: Newly created to support detailed viewing for Courrier Arrivee, mirroring .
 </code_architecture>
 
 <pending_tasks>
-The following tasks, requested in Chat Message 141, are currently pending completion:
--   Complete event deletion functionality in the Calendar component (frontend).
--   Ensure full functionality of Notifications and Système Préférences in Settings.
--   Fully implement the dedicated Profile page, including user photo and privacy settings.
--   Implement display and management of auto-incrementing document counters in Settings.
--   Implement option to lock/unlock signup in Settings.
+The following tasks are pending:
+-   Apply the same modern design (icons, floating button, view modal, modern alerts) from  to  (incoming-mail).
+-   Update the Dashboard page with design improvements.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the previous AI engineer was working on addressing a new set of user requests to enhance the Calendar and Settings modules, and to introduce a dedicated Profile page.
+Immediately before this summary request, the AI engineer was in the process of applying the modern design and enhanced functionality, which were successfully implemented in the DRI Depart module, to the  (outgoing-mail) component. This involves:
 
-**Specifically, the work involved:**
-1.  **Calendar Event Deletion:** The engineer began implementing the ability to delete events from the calendar. This involved adding delete buttons to the event views (day, week, month) within . The backend API for deleting events was already confirmed to be working.
-2.  **Settings Functionality:** Work was initiated to ensure that the Notifications and Préférences système sections within the  component are fully functional and integrate with the backend settings APIs.
-3.  **Dedicated Profile Page:**
-    *   A new component, , was created.
-    *   The  file was updated to include the routing for this new Profile page.
-    *   The  navigation was modified to include a link to the new Profile page and remove profile-related elements from the user dropdown (to redirect to the new page).
-    *   The  component was being refactored to remove the Profil section, as it will now reside on its own dedicated page.
-4.  **Backend for Document Counters and Signup Management:** New backend endpoints were added in  to handle the logic for displaying and managing auto-incrementing document counters (for outgoing mail, incoming mail, DRI depart, approbation OM) and for controlling the signup lock/unlock feature.
+1.  **Refactoring **:
+    *   Implementing a similar table structure with updated icons for Référence (Hashtag icon next to each reference) and removing icons from table headers.
+    *   Replacing old action buttons with modern Heroicons ( for view,  for edit,  for delete).
+    *   Integrating the new  system for success/error messages and confirmations, replacing native  and .
+    *   Transforming the Nouveau Courrier button into a floating action button (FAB) at the bottom-right of the screen, consistent with .
+    *   Integrating file preview functionality for attached documents within a dedicated view modal.
 
-The trajectory ends with the engineer in the middle of these implementations, specifically removing the Profile section from Settings.
+2.  **Creating **: A new component created to handle the detailed view of Courrier Départ documents, providing a scrollbar-less layout, file preview capabilities (PDFs, images, text), and download options.
+
+The last action performed was updating the table structure of  to match the  design, indicating that the task is partially completed for . The engineer had just started working on applying these design changes, with  and Dashboard updates still remaining.
 </current_work>
 
 <optional_next_step>
-Complete the frontend implementation for Calendar event deletion, fully integrate and test the Settings preferences, and finalize the dedicated Profile page with all specified features.
+Continue applying the modern design and functionality to .
 </optional_next_step>
