@@ -549,8 +549,11 @@ const OMApprovalForm = ({ onClose, onSave }) => {
               value={formData.jobTitle}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="Fonction/Poste"
+              readOnly={formData.matricule && formData.jobTitle}
+              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                formData.matricule && formData.jobTitle ? 'bg-gray-50' : ''
+              }`}
+              placeholder="Fonction sera remplie automatiquement"
             />
           </div>
           <div className="space-y-2">
@@ -561,8 +564,11 @@ const OMApprovalForm = ({ onClose, onSave }) => {
               value={formData.division}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="Division/Service"
+              readOnly={formData.matricule && formData.division}
+              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                formData.matricule && formData.division ? 'bg-gray-50' : ''
+              }`}
+              placeholder="Division sera remplie automatiquement"
             />
           </div>
         </div>
