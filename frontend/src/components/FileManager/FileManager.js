@@ -644,20 +644,36 @@ const FileManager = () => {
 
                         <div className="flex items-center space-x-2 pt-3 border-t border-gray-200">
                           <button
+                            onClick={() => previewFileHandler(file)}
+                            className="flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-xs font-medium"
+                          >
+                            <EyeIcon className="w-4 h-4 mr-1" />
+                            Aperçu
+                          </button>
+                          
+                          <button
                             onClick={() => downloadFile(file)}
-                            className="flex-1 flex items-center justify-center px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors text-xs font-medium"
+                            className="flex items-center justify-center px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors text-xs font-medium"
                           >
                             <ArrowDownTrayIcon className="w-4 h-4 mr-1" />
                             Télécharger
                           </button>
                           
                           {canModifyItem(file) && (
-                            <button
-                              onClick={() => deleteFile(file)}
-                              className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-                            >
-                              <TrashIcon className="w-4 h-4" />
-                            </button>
+                            <>
+                              <button
+                                onClick={() => startRenameFile(file)}
+                                className="px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+                              >
+                                <PencilIcon className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => deleteFile(file)}
+                                className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>
