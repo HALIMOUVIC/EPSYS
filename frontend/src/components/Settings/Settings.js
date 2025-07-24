@@ -211,60 +211,6 @@ const Settings = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Profile Settings */}
-        <div className="bg-white rounded-xl p-6 shadow-lg">
-          <div className="flex items-center space-x-2 mb-6">
-            <UserIcon className="w-6 h-6 text-purple-600" />
-            <h2 className="text-xl font-semibold text-gray-900">Profil</h2>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Nom complet</label>
-              <input
-                type="text"
-                value={settings.full_name || ''}
-                onChange={(e) => handleInputChange('full_name', e.target.value)}
-                onBlur={(e) => handleInputChange('full_name', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-              <input
-                type="email"
-                value={settings.email || ''}
-                disabled
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
-              />
-              <p className="text-xs text-gray-500 mt-1">L'email ne peut pas être modifié</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Téléphone</label>
-              <input
-                type="tel"
-                value={settings.phone || ''}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                onBlur={(e) => handleInputChange('phone', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Biographie</label>
-              <textarea
-                value={settings.bio || ''}
-                onChange={(e) => handleInputChange('bio', e.target.value)}
-                onBlur={(e) => handleInputChange('bio', e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-          </div>
-        </div>
-
         {/* Notifications */}
         <div className="bg-white rounded-xl p-6 shadow-lg">
           <div className="flex items-center space-x-2 mb-6">
