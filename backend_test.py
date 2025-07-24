@@ -542,6 +542,191 @@ def test_document_permissions():
         else:
             results.log_failure("User denied access to admin document", "Should deny access to other user's document")
 
+def test_om_approval_functionality():
+    """Test OM Approval document functionality comprehensively"""
+    print("\n📋 Testing OM Approval Functionality...")
+    
+    # Test 1: Document Creation with proper metadata structure
+    om_approval_data = {
+        "title": "Mission à Alger - Formation Technique",
+        "description": "Ordre de mission pour formation technique à Alger",
+        "document_type": "om_approval",
+        "metadata": {
+            "fullName": "Benali Ahmed",
+            "matricule": "EMP-2025-001",
+            "jobTitle": "Ingénieur Technique",
+            "division": "Division Exploration Production",
+            "itineraire": "Hassi Messaoud - Alger - Hassi Messaoud",
+            "dateDepart": "2025-02-15",
+            "dateRetour": "2025-02-20",
+            "transport": "Avion",
+            "objet": "Participation à la formation technique sur les nouvelles technologies de forage"
+        }
+    }
+    
+    response = make_request("POST", "/documents", om_approval_data, auth_token=user_token)
+    om_approval_id = None
+    if response and response.status_code == 200:
+        doc = response.json()
+        om_approval_id = doc["id"]
+        
+        # Verify document type
+        if doc["document_type"] == "om_approval":
+            results.log_success("OM Approval document creation with correct type")
+        else:
+            results.log_failure("OM Approval document creation", f"Wrong document type: {doc['document_type']}")
+        
+        # Verify metadata structure
+        metadata = doc.get("metadata", {})
+        required_fields = ["fullName", "matricule", "jobTitle", "division", "itineraire", 
+                          "dateDepart", "dateRetour", "transport", "objet"]
+        
+        missing_fields = [field for field in required_fields if field not in metadata]
+        if not missing_fields:
+            results.log_success("OM Approval metadata structure validation")
+        else:
+            results.log_failure("OM Approval metadata structure", f"Missing fields: {missing_fields}")
+        
+        # Verify specific metadata values
+        if (metadata.get("fullName") == "Benali Ahmed" and 
+            metadata.get("matricule") == "EMP-2025-001" and
+            metadata.get("jobTitle") == "Ingénieur Technique"):
+            results.log_success("OM Approval metadata values validation")
+        else:
+            results.log_failure("OM Approval metadata values", "Metadata values not stored correctly")
+            
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("OM Approval document creation", error_msg)
+    
+    # Test 2: Reference Generation (OM-2025-XXX format)
+    if om_approval_id:
+        response = make_request("GET", f"/documents/{om_approval_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            doc = response.json()
+            reference = doc.get("reference", "")
+            
+            # Check if reference follows OM-2025-XXX pattern
+            import re
+            if re.match(r"^OM-2025-\d{3}$", reference):
+                results.log_success("OM Approval reference generation (OM-2025-XXX format)")
+            else:
+                results.log_failure("OM Approval reference generation", f"Invalid reference format: {reference}")
+        else:
+            results.log_failure("OM Approval reference verification", "Could not retrieve document")
+    
+    # Test 3: Document Retrieval with document_type filter
+    response = make_request("GET", "/documents?document_type=om_approval", auth_token=user_token)
+    if response and response.status_code == 200:
+        documents = response.json()
+        if isinstance(documents, list):
+            # Check if our OM approval document is in the list
+            om_docs = [doc for doc in documents if doc["document_type"] == "om_approval"]
+            if om_docs:
+                results.log_success("OM Approval document retrieval with type filter")
+                
+                # Verify that all returned documents are OM approval type
+                all_om_type = all(doc["document_type"] == "om_approval" for doc in documents)
+                if all_om_type:
+                    results.log_success("OM Approval type filter accuracy")
+                else:
+                    results.log_failure("OM Approval type filter", "Filter returned wrong document types")
+            else:
+                results.log_failure("OM Approval document retrieval", "No OM approval documents found")
+        else:
+            results.log_failure("OM Approval document retrieval", "Invalid response format")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("OM Approval document retrieval", error_msg)
+    
+    # Test 4: Create another OM Approval to test reference increment
+    om_approval_data2 = {
+        "title": "Mission à Oran - Audit Technique",
+        "description": "Ordre de mission pour audit des installations à Oran",
+        "document_type": "om_approval",
+        "metadata": {
+            "fullName": "Khelifi Fatima",
+            "matricule": "EMP-2025-002",
+            "jobTitle": "Auditeur Senior",
+            "division": "Division Qualité HSE",
+            "itineraire": "Hassi Messaoud - Oran - Hassi Messaoud",
+            "dateDepart": "2025-03-01",
+            "dateRetour": "2025-03-05",
+            "transport": "Véhicule de service",
+            "objet": "Audit des installations de production et contrôle qualité"
+        }
+    }
+    
+    response = make_request("POST", "/documents", om_approval_data2, auth_token=user_token)
+    om_approval_id2 = None
+    if response and response.status_code == 200:
+        doc = response.json()
+        om_approval_id2 = doc["id"]
+        reference2 = doc.get("reference", "")
+        
+        # Verify reference increment
+        if reference2 and reference2 != (doc.get("reference") if om_approval_id else ""):
+            results.log_success("OM Approval reference increment")
+        else:
+            results.log_failure("OM Approval reference increment", f"Reference not incremented: {reference2}")
+    
+    # Test 5: Update OM Approval metadata
+    if om_approval_id:
+        update_data = {
+            "metadata": {
+                "fullName": "Benali Ahmed",
+                "matricule": "EMP-2025-001",
+                "jobTitle": "Ingénieur Technique Senior",  # Updated job title
+                "division": "Division Exploration Production",
+                "itineraire": "Hassi Messaoud - Alger - Hassi Messaoud",
+                "dateDepart": "2025-02-16",  # Updated date
+                "dateRetour": "2025-02-21",  # Updated date
+                "transport": "Avion",
+                "objet": "Participation à la formation technique avancée sur les nouvelles technologies de forage"
+            }
+        }
+        
+        response = make_request("PUT", f"/documents/{om_approval_id}", update_data, auth_token=user_token)
+        if response and response.status_code == 200:
+            doc = response.json()
+            updated_metadata = doc.get("metadata", {})
+            
+            if (updated_metadata.get("jobTitle") == "Ingénieur Technique Senior" and
+                updated_metadata.get("dateDepart") == "2025-02-16"):
+                results.log_success("OM Approval metadata update")
+            else:
+                results.log_failure("OM Approval metadata update", "Metadata not updated correctly")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("OM Approval metadata update", error_msg)
+    
+    # Test 6: Dashboard statistics include OM Approval count
+    response = make_request("GET", "/dashboard/stats", auth_token=user_token)
+    if response and response.status_code == 200:
+        stats = response.json()
+        om_count = stats.get("om_approval", 0)
+        
+        if om_count >= 1:  # Should have at least the documents we created
+            results.log_success("OM Approval count in dashboard statistics")
+        else:
+            results.log_failure("OM Approval dashboard stats", f"Expected OM count >= 1, got {om_count}")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("OM Approval dashboard statistics", error_msg)
+    
+    # Test 7: Delete OM Approval document (cleanup)
+    if om_approval_id:
+        response = make_request("DELETE", f"/documents/{om_approval_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            results.log_success("OM Approval document deletion")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("OM Approval document deletion", error_msg)
+    
+    # Clean up second document
+    if om_approval_id2:
+        make_request("DELETE", f"/documents/{om_approval_id2}", auth_token=user_token)
+
 def test_document_deletion():
     """Test document deletion functionality"""
     print("\n🗑️ Testing Document Deletion...")
