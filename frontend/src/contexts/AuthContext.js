@@ -159,10 +159,13 @@ export const AuthProvider = ({ children }) => {
         const remainingMs = timeoutMs - timeSinceLastActivity;
         const remainingMinutes = Math.ceil(remainingMs / (60 * 1000));
 
-        console.log(`🔍 Session check: ${Math.floor(timeSinceLastActivity / 1000)}s since last activity, timeout: ${sessionTimeout}min, remaining: ${remainingMinutes}min`);
+        // Only log when close to expiry (last 30 seconds) or every minute
+        if (remainingMs <= 30000 || timeSinceLastActivity % 60000 < 5000) {
+          console.log(`🔍 Session check: ${Math.floor(timeSinceLastActivity / 1000)}s since last activity, remaining: ${remainingMinutes}min`);
+        }
 
         if (timeSinceLastActivity >= timeoutMs) {
-          console.log(`🚨 SESSION EXPIRED! ${sessionTimeout} minutes of inactivity reached - TRIGGERING LOGOUT NOW`);
+          console.log(`🚨 SESSION EXPIRED! ${sessionTimeout} minutes of inactivity reached - SHOWING MODAL`);
           
           // Clear the timer before logout to prevent multiple calls
           if (sessionTimerRef.current) {
@@ -173,8 +176,6 @@ export const AuthProvider = ({ children }) => {
           // Perform logout immediately
           handleSessionExpiry();
         }
-      } else {
-        console.log(`⏸️ Session timer paused - user: ${!!user}, timeout: ${sessionTimeout}`);
       }
     }, 5000); // Check every 5 seconds for faster response
   };
