@@ -1091,6 +1091,134 @@ async def delete_file(
     
     return {"message": "File deleted successfully"}
 
+@api_router.put("/file-manager/files/{file_id}")
+async def rename_file(
+    file_id: str,
+    new_name: str = Form(...),
+    current_user: User = Depends(get_current_user)
+):
+    """Rename a file"""
+    file_item = await db.file_items.find_one({"id": file_id})
+    if not file_item:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Check permissions
+    if file_item["created_by"] != current_user.id and current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this file")
+    
+    # Validate new name
+    if not new_name.strip():
+        raise HTTPException(status_code=400, detail="File name cannot be empty")
+    
+    # Update file name in database
+    update_data = {
+        "name": new_name.strip(),
+        "original_name": new_name.strip(),
+        "updated_at": datetime.utcnow()
+    }
+    
+    await db.file_items.update_one({"id": file_id}, {"$set": update_data})
+    
+    # Return updated file info
+    updated_file = await db.file_items.find_one({"id": file_id})
+    return {
+        "id": updated_file["id"],
+        "name": updated_file["name"],
+        "original_name": updated_file["original_name"],
+        "file_path": updated_file["file_path"],
+        "folder_id": updated_file["folder_id"],
+        "file_size": updated_file["file_size"],
+        "mime_type": updated_file["mime_type"],
+        "created_by": updated_file["created_by"],
+        "uploaded_by_name": updated_file["uploaded_by_name"],
+        "created_at": updated_file["created_at"],
+        "updated_at": updated_file["updated_at"]
+    }
+
+@api_router.get("/file-manager/preview/{file_id}")
+async def preview_file(
+    file_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get file preview information and content for supported file types"""
+    file_item = await db.file_items.find_one({"id": file_id})
+    if not file_item:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    if not os.path.exists(file_item["file_path"]):
+        raise HTTPException(status_code=404, detail="Physical file not found")
+    
+    file_extension = file_item["name"].split(".")[-1].lower() if "." in file_item["name"] else ""
+    
+    # For text files, read content
+    if file_extension in ['txt', 'md', 'csv', 'json', 'xml', 'html', 'css', 'js', 'py']:
+        try:
+            with open(file_item["file_path"], 'r', encoding='utf-8') as f:
+                content = f.read()
+                # Limit content size for preview (first 10000 characters)
+                if len(content) > 10000:
+                    content = content[:10000] + "\n... (content truncated)"
+                
+                return {
+                    "file_id": file_id,
+                    "name": file_item["name"],
+                    "file_size": file_item["file_size"],
+                    "mime_type": file_item["mime_type"],
+                    "preview_type": "text",
+                    "content": content,
+                    "can_preview": True
+                }
+        except UnicodeDecodeError:
+            pass
+    
+    # For images, return file info for direct display
+    if file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg']:
+        return {
+            "file_id": file_id,
+            "name": file_item["name"],
+            "file_size": file_item["file_size"],
+            "mime_type": file_item["mime_type"],
+            "preview_type": "image",
+            "file_url": f"/api/file-manager/download/{file_id}",
+            "can_preview": True
+        }
+    
+    # For PDF files
+    if file_extension == 'pdf':
+        return {
+            "file_id": file_id,
+            "name": file_item["name"],
+            "file_size": file_item["file_size"],
+            "mime_type": file_item["mime_type"],
+            "preview_type": "pdf",
+            "file_url": f"/api/file-manager/download/{file_id}",
+            "can_preview": True
+        }
+    
+    # For office documents (limited preview info)
+    if file_extension in ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']:
+        return {
+            "file_id": file_id,
+            "name": file_item["name"],
+            "file_size": file_item["file_size"],
+            "mime_type": file_item["mime_type"],
+            "preview_type": "office",
+            "file_url": f"/api/file-manager/download/{file_id}",
+            "can_preview": False,
+            "message": "Office documents cannot be previewed. Click download to open the file."
+        }
+    
+    # For other file types
+    return {
+        "file_id": file_id,
+        "name": file_item["name"],
+        "file_size": file_item["file_size"],
+        "mime_type": file_item["mime_type"],
+        "preview_type": "unknown",
+        "can_preview": False,
+        "message": "Preview not available for this file type. Click download to view the file."
+    }
+
 @api_router.get("/file-manager/download/{file_id}")
 async def download_file(
     file_id: str,
