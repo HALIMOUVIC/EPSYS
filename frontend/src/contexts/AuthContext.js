@@ -113,7 +113,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateLastActivity = () => {
-    lastActivityRef.current = Date.now();
+    const now = Date.now();
+    console.log(`👆 Activity detected at ${new Date(now).toLocaleTimeString()}`);
+    lastActivityRef.current = now;
   };
 
   const setupActivityTracking = () => {
