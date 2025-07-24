@@ -357,24 +357,36 @@ const DRIDepartViewModal = ({ document, isOpen, onClose }) => {
                 </button>
               </div>
               <div className="flex-1 p-4">
-                {previewFile.type.includes('pdf') ? (
+                {previewFile.type.includes('pdf') || previewFile.name.toLowerCase().endsWith('.pdf') ? (
                   <iframe
                     src={previewFile.url}
                     className="w-full h-full"
                     title={previewFile.name}
                   />
-                ) : previewFile.type.includes('image') ? (
-                  <img
-                    src={previewFile.url}
-                    alt={previewFile.name}
-                    className="max-w-full max-h-full object-contain mx-auto"
-                  />
-                ) : (
+                ) : (previewFile.type.includes('image') || 
+                     previewFile.name.toLowerCase().match(/\.(jpg|jpeg|png|gif)$/)) ? (
+                  <div className="h-full flex items-center justify-center">
+                    <img
+                      src={previewFile.url}
+                      alt={previewFile.name}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                ) : (previewFile.type.includes('text') || 
+                     previewFile.name.toLowerCase().match(/\.(txt|md)$/)) ? (
                   <iframe
                     src={previewFile.url}
                     className="w-full h-full bg-white"
                     title={previewFile.name}
                   />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    <div className="text-center">
+                      <DocumentTextIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                      <p className="text-lg font-medium">Aperçu non disponible</p>
+                      <p className="text-sm">Ce type de fichier ne peut pas être prévisualisé</p>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
