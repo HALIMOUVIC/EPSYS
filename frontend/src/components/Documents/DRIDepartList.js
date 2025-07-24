@@ -20,7 +20,7 @@ const DRIDepartList = () => {
   const fetchDocuments = async (page = 1) => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/documents/dri-depart?page=${page}&limit=${pagination.limit}`);
+      const response = await axios.get(`/documents/dri-depart?page=${page}&limit=${pagination.limit}`);
       setDocuments(response.data.documents);
       setPagination({
         page: response.data.page,
