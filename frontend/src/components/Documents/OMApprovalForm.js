@@ -130,7 +130,7 @@ const OMApprovalForm = ({ onClose, onSave }) => {
       
       // Reset form
       setFormData({
-        fullName: user?.full_name || '',
+        fullName: '',
         matricule: '',
         date: new Date().toISOString().split('T')[0],
         jobTitle: '',
