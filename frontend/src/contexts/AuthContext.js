@@ -239,7 +239,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     setUser(null);
-    setLastActivity(Date.now());
+    lastActivityRef.current = Date.now();
   };
 
   const getRemainingTime = () => {
