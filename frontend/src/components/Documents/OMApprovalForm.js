@@ -375,9 +375,8 @@ const OMApprovalForm = ({ onClose, onSave }) => {
                         const secondLine = [];
                         let charCount = 0;
                         
-                        // Approximately determine first line (adjust number as needed)
                         words.forEach(word => {
-                          if(charCount < 60) { // Approximate character limit for first line
+                          if(charCount < 60) {
                             firstLine.push(word);
                             charCount += word.length + 1;
                           } else {
@@ -429,44 +428,37 @@ const OMApprovalForm = ({ onClose, onSave }) => {
               </div>
             </div>
           </div>
+          
+          <div style="position: fixed; bottom: 30px; right: 35px; font-size: 8px; color: #000;">
+            Approbation Printed by ENP Application @2025
+          </div>
         </body>
       </html>
     `;
 
-    // Use a more reliable approach for printing
-    try {
-      // Open a new window for printing
-      const printWindow = window.open('', '_blank', 'width=800,height=600');
+    // Simple and reliable approach - open in new tab for printing
+    const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      newWindow.document.write(printContent);
+      newWindow.document.close();
+      newWindow.focus();
       
-      if (printWindow) {
-        printWindow.document.write(printContent);
-        printWindow.document.close();
-        
-        // Wait for content to load, then print
-        printWindow.onload = function() {
-          setTimeout(() => {
-            printWindow.print();
-            // Close window after printing
-            setTimeout(() => {
-              printWindow.close();
-            }, 1000);
-          }, 500);
-        };
-      } else {
-        // Fallback: create a blob and download
-        const blob = new Blob([printContent], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const link = window.document.createElement('a');
-        link.href = url;
-        link.download = `Ordre_Mission_${formData.fullName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
-        window.document.body.appendChild(link);
-        link.click();
-        window.document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }
-    } catch (error) {
-      console.error('Print error:', error);
-      alert('Erreur lors de l\'impression. Le document a été sauvegardé.');
+      // Trigger print dialog
+      setTimeout(() => {
+        newWindow.print();
+      }, 1000);
+    } else {
+      // Fallback: create downloadable HTML file
+      const blob = new Blob([printContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Ordre_Mission_${formData.fullName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      alert('Document téléchargé. Ouvrez le fichier HTML pour l\'imprimer.');
     }
   };
 
