@@ -20,6 +20,7 @@ import {
 
 const Settings = () => {
   const { user } = useAuth();
+  const { t, changeLanguage, currentLanguage } = useLanguage();
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
