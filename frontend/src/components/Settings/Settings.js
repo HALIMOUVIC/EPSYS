@@ -490,48 +490,165 @@ const Settings = () => {
           </div>
         </div>
 
-        {/* System Information (Admin Only) */}
+        {/* System Information & Document Counters (Admin Only) */}
         {user?.role === 'admin' && systemInfo && (
-          <div className="bg-white rounded-xl p-6 shadow-lg">
-            <div className="flex items-center space-x-2 mb-6">
-              <ChartBarIcon className="w-6 h-6 text-purple-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Informations système</h2>
-            </div>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{systemInfo.database_stats.total_users}</div>
-                  <div className="text-sm text-blue-600">Utilisateurs</div>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{systemInfo.database_stats.total_documents}</div>
-                  <div className="text-sm text-green-600">Documents</div>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">{systemInfo.database_stats.total_folders}</div>
-                  <div className="text-sm text-purple-600">Dossiers</div>
-                </div>
-                <div className="bg-orange-50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-orange-600">{systemInfo.database_stats.total_events}</div>
-                  <div className="text-sm text-orange-600">Événements</div>
-                </div>
+          <>
+            <div className="bg-white rounded-xl p-6 shadow-lg">
+              <div className="flex items-center space-x-2 mb-6">
+                <ChartBarIcon className="w-6 h-6 text-purple-600" />
+                <h2 className="text-xl font-semibold text-gray-900">Informations système</h2>
               </div>
 
-              <div className="pt-4 border-t border-gray-200">
-                <div className="text-sm text-gray-600">
-                  <div className="flex justify-between mb-2">
-                    <span>Statut système:</span>
-                    <span className="text-green-600 font-medium">{systemInfo.system_status.status}</span>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{systemInfo.database_stats.total_users}</div>
+                    <div className="text-sm text-blue-600">Utilisateurs</div>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Version:</span>
-                    <span className="font-medium">{systemInfo.system_status.version}</span>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">{systemInfo.database_stats.total_documents}</div>
+                    <div className="text-sm text-green-600">Documents</div>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">{systemInfo.database_stats.total_folders}</div>
+                    <div className="text-sm text-purple-600">Dossiers</div>
+                  </div>
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <div className="text-2xl font-bold text-orange-600">{systemInfo.database_stats.total_events}</div>
+                    <div className="text-sm text-orange-600">Événements</div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="text-sm text-gray-600">
+                    <div className="flex justify-between mb-2">
+                      <span>Statut système:</span>
+                      <span className="text-green-600 font-medium">{systemInfo.system_status.status}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Version:</span>
+                      <span className="font-medium">{systemInfo.system_status.version}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+
+            {/* Document Counters Management */}
+            <div className="bg-white rounded-xl p-6 shadow-lg">
+              <div className="flex items-center space-x-2 mb-6">
+                <DocumentTextIcon className="w-6 h-6 text-purple-600" />
+                <h2 className="text-xl font-semibold text-gray-900">Gestion des numérotations</h2>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="text-lg font-bold text-blue-600">
+                          DEP-{systemInfo.document_counters?.current_year}-{String(systemInfo.document_counters?.courrier_depart || 0).padStart(3, '0')}
+                        </div>
+                        <div className="text-sm text-blue-600">Courrier Départ</div>
+                      </div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {systemInfo.document_counters?.courrier_depart || 0}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="text-lg font-bold text-green-600">
+                          ARR-{systemInfo.document_counters?.current_year}-{String(systemInfo.document_counters?.courrier_arrive || 0).padStart(3, '0')}
+                        </div>
+                        <div className="text-sm text-green-600">Courrier Arrivé</div>
+                      </div>
+                      <div className="text-2xl font-bold text-green-600">
+                        {systemInfo.document_counters?.courrier_arrive || 0}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="text-lg font-bold text-purple-600">
+                          DRID-{systemInfo.document_counters?.current_year}-{String(systemInfo.document_counters?.dri_depart || 0).padStart(4, '0')}
+                        </div>
+                        <div className="text-sm text-purple-600">DRI Départ</div>
+                      </div>
+                      <div className="text-2xl font-bold text-purple-600">
+                        {systemInfo.document_counters?.dri_depart || 0}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="text-lg font-bold text-orange-600">
+                          OM-{systemInfo.document_counters?.current_year}-{String(systemInfo.document_counters?.om_approval || 0).padStart(3, '0')}
+                        </div>
+                        <div className="text-sm text-orange-600">Approbation OM</div>
+                      </div>
+                      <div className="text-2xl font-bold text-orange-600">
+                        {systemInfo.document_counters?.om_approval || 0}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium text-gray-900">Auto-remise à zéro des compteurs</h3>
+                    <span className="text-sm text-green-600 font-medium">Activé</span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Les compteurs de numérotation se remettent automatiquement à zéro au début de chaque nouvelle année.
+                    Par exemple: DEP-2025-125 → DEP-2026-001
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* System Control */}
+            <div className="bg-white rounded-xl p-6 shadow-lg">
+              <div className="flex items-center space-x-2 mb-6">
+                <ShieldCheckIcon className="w-6 h-6 text-purple-600" />
+                <h2 className="text-xl font-semibold text-gray-900">Contrôle système</h2>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div>
+                    <h3 className="font-medium text-gray-900">Inscription des nouveaux utilisateurs</h3>
+                    <p className="text-sm text-gray-600">Autoriser ou bloquer l'inscription de nouveaux comptes</p>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <span className={`text-sm font-medium ${systemInfo.system_settings?.signup_enabled ? 'text-green-600' : 'text-red-600'}`}>
+                      {systemInfo.system_settings?.signup_enabled ? 'Autorisé' : 'Bloqué'}
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={systemInfo.system_settings?.signup_enabled || false}
+                      onChange={async (e) => {
+                        try {
+                          await axios.put(`${backendUrl}/api/settings/signup-toggle?enabled=${e.target.checked}`);
+                          showAlert('success', 'Succès', `Inscription ${e.target.checked ? 'autorisée' : 'bloquée'} avec succès`);
+                          fetchSystemInfo(); // Refresh system info
+                        } catch (error) {
+                          showAlert('error', 'Erreur', 'Échec de la modification du paramètre');
+                        }
+                      }}
+                      className="w-4 h-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
 
