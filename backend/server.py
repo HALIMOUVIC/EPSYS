@@ -1717,6 +1717,50 @@ async def download_file(
         media_type=file_item["mime_type"]
     )
 
+@api_router.get("/documents/download/{file_path:path}")
+async def download_document_file(
+    file_path: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Download a document file by file path"""
+    # Decode the file path
+    import urllib.parse
+    decoded_path = urllib.parse.unquote(file_path)
+    
+    # Ensure the file path is within the uploads directory for security
+    full_path = Path(decoded_path)
+    
+    # Check if it's an absolute path starting with uploads directory
+    if not full_path.is_absolute():
+        # If it's relative, make it relative to uploads directory
+        full_path = UPLOADS_DIR / decoded_path
+    
+    # Security check - ensure the path is within uploads directory
+    try:
+        full_path = full_path.resolve()
+        uploads_resolved = UPLOADS_DIR.resolve()
+        if not str(full_path).startswith(str(uploads_resolved)):
+            raise HTTPException(status_code=403, detail="Access denied")
+    except Exception:
+        raise HTTPException(status_code=403, detail="Invalid file path")
+    
+    # Check if file exists
+    if not full_path.exists():
+        raise HTTPException(status_code=404, detail=f"File not found: {decoded_path}")
+    
+    # Get the original filename from the path
+    filename = full_path.name
+    
+    # Try to get a more user-friendly name from document metadata if possible
+    # This is optional - we could search documents collection for this file
+    
+    from fastapi.responses import FileResponse
+    return FileResponse(
+        path=str(full_path),
+        filename=filename,
+        media_type='application/octet-stream'  # Generic type, browser will detect
+    )
+
 @api_router.get("/file-manager/search")
 async def search_files_and_folders(
     query: str = Query(..., min_length=1),
