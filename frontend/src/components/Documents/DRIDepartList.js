@@ -12,6 +12,8 @@ const DRIDepartList = () => {
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingDocument, setEditingDocument] = useState(null);
+  const [viewingDocument, setViewingDocument] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
