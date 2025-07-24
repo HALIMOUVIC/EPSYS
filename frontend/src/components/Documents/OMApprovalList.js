@@ -279,7 +279,7 @@ const OMApprovalList = () => {
         <body>
             <div class="a4">
                 <div class="header">
-                    <div style="width: 100px; height: 80px; border: 2px solid #000; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px;">LOGO</div>
+                    <img src="https://images.seeklogo.com/logo-png/40/2/sonatrach-logo-png_seeklogo-409789.png" alt="Sonatrach Logo" class="logo" style="width: 100px; height: 80px; object-fit: contain;">
                     <div class="header-text">
                         <div class="linelft">Activité Exploration-Production</div>
                         <div class="linelft">Division Production</div>
