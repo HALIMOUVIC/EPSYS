@@ -193,7 +193,7 @@ const CourrierArriveeViewModal = ({ document, isOpen, onClose }) => {
                       <DocumentTextIcon className="w-5 h-5 text-purple-600" />
                       <label className="text-sm font-semibold text-gray-700">Réf. Expéditeur</label>
                     </div>
-                    <p className="text-gray-900">{document.metadata.expediteur_reference}</p>
+                    <p className="text-gray-900">{document.metadata?.reference_expediteur || '-'}</p>
                   </div>
 
                   <div className="bg-gray-50 p-4 rounded-lg">
