@@ -61,6 +61,16 @@ const DRIDepartList = () => {
     setShowForm(true);
   };
 
+  const handleView = (document) => {
+    setViewingDocument(document);
+    setShowViewModal(true);
+  };
+
+  const handleViewClose = () => {
+    setShowViewModal(false);
+    setViewingDocument(null);
+  };
+
   const handleFormSuccess = () => {
     fetchDocuments(pagination.page);
     setShowForm(false);
