@@ -201,7 +201,7 @@ const CourrierArriveeViewModal = ({ document, isOpen, onClose }) => {
                       <CalendarIcon className="w-5 h-5 text-orange-600" />
                       <label className="text-sm font-semibold text-gray-700">Date Courrier</label>
                     </div>
-                    <p className="text-gray-900">{formatDate(document.metadata.date_courrier)}</p>
+                    <p className="text-gray-900">{document.metadata?.date_courrier ? formatDate(document.metadata.date_courrier) : '-'}</p>
                   </div>
 
                   <div className="bg-gray-50 p-4 rounded-lg">
