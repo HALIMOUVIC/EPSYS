@@ -38,6 +38,14 @@ const FileManager = () => {
   const [editingFolder, setEditingFolder] = useState(null);
   const [folderName, setFolderName] = useState('');
   
+  // File operations state
+  const [showRenameFile, setShowRenameFile] = useState(false);
+  const [renamingFile, setRenamingFile] = useState(null);
+  const [newFileName, setNewFileName] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null);
+  const [previewData, setPreviewData] = useState(null);
+  
   // Alert system state
   const [alert, setAlert] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
