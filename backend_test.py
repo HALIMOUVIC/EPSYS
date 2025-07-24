@@ -1775,6 +1775,10 @@ def run_all_tests():
         # Enhanced File Manager tests
         test_enhanced_file_manager()
         
+        # NEW: File Manager specific feature tests
+        test_file_manager_renaming()
+        test_file_manager_preview()
+        
         # Role-based access tests
         test_role_based_access()
         
