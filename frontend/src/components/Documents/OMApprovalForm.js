@@ -67,24 +67,24 @@ const OMApprovalForm = ({ onClose, onSave }) => {
       const response = await axios.get(`/employees/${matricule}`);
       const employeeData = response.data;
       
-      // Auto-populate form fields with employee data
+      // Auto-populate form fields with employee data (excluding itineraire)
       setFormData(prev => ({
         ...prev,
         fullName: employeeData.fullName,
         jobTitle: employeeData.jobTitle,
-        division: employeeData.division,
-        itineraire: employeeData.itineraire
+        division: employeeData.division
+        // itineraire is not auto-populated - user fills it manually
       }));
     } catch (error) {
       console.error('Error fetching employee data:', error);
       if (error.response?.status === 404) {
-        // Clear fields if employee not found
+        // Clear fields if employee not found (excluding itineraire)
         setFormData(prev => ({
           ...prev,
           fullName: '',
           jobTitle: '',
-          division: '',
-          itineraire: ''
+          division: ''
+          // itineraire remains as user entered
         }));
         setError('Employé non trouvé pour ce matricule');
       } else {
