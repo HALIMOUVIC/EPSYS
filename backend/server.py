@@ -175,7 +175,7 @@ async def generate_reference(document_type: str) -> str:
     prefixes = {
         'outgoing_mail': 'DEP',
         'incoming_mail': 'ARR', 
-        'dri_depart': 'DRI',
+        'dri_deport': 'DRI',
         'om_approval': 'OM'
     }
     
