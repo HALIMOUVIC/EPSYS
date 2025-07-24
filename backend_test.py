@@ -727,6 +727,264 @@ def test_om_approval_functionality():
     if om_approval_id2:
         make_request("DELETE", f"/documents/{om_approval_id2}", auth_token=user_token)
 
+def test_dri_depart_functionality():
+    """Test DRI Depart document functionality comprehensively"""
+    print("\n🏢 Testing DRI Depart Functionality...")
+    
+    # Test 1: Document Creation with proper metadata structure
+    dri_depart_data = {
+        "date": "2025-01-15",
+        "expediteur": "Direction Regionale d'Hassi Messaoud",
+        "expediteur_reference": "DRH/2025/001",
+        "expediteur_date": "2025-01-14",
+        "destinataire": "Ministere de l'Energie et des Mines",
+        "objet": "Rapport mensuel des activites de production - Janvier 2025"
+    }
+    
+    # Create a temporary test file for upload
+    test_content = b"Contenu du rapport DRI Depart - Document officiel pour test"
+    
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
+        temp_file.write(test_content)
+        temp_file_path = temp_file.name
+    
+    dri_depart_id = None
+    try:
+        # Test document creation with file upload
+        with open(temp_file_path, 'rb') as f:
+            files = {
+                'files': ('rapport_dri_janvier.pdf', f, 'application/pdf'),
+                'date': (None, dri_depart_data['date']),
+                'expediteur': (None, dri_depart_data['expediteur']),
+                'expediteur_reference': (None, dri_depart_data['expediteur_reference']),
+                'expediteur_date': (None, dri_depart_data['expediteur_date']),
+                'destinataire': (None, dri_depart_data['destinataire']),
+                'objet': (None, dri_depart_data['objet'])
+            }
+            
+            response = make_request("POST", "/documents/dri-depart", files=files, auth_token=user_token)
+        
+        if response and response.status_code == 200:
+            doc = response.json()
+            dri_depart_id = doc["id"]
+            
+            # Verify document type
+            if doc["document_type"] == "dri_deport":
+                results.log_success("DRI Depart document creation with correct type")
+            else:
+                results.log_failure("DRI Depart document creation", f"Wrong document type: {doc['document_type']}")
+            
+            # Verify metadata structure
+            metadata = doc.get("metadata", {})
+            required_fields = ["date", "expediteur", "expediteur_reference", "expediteur_date", "destinataire", "objet"]
+            
+            missing_fields = [field for field in required_fields if field not in metadata]
+            if not missing_fields:
+                results.log_success("DRI Depart metadata structure validation")
+            else:
+                results.log_failure("DRI Depart metadata structure", f"Missing fields: {missing_fields}")
+            
+            # Verify specific metadata values
+            if (metadata.get("expediteur") == dri_depart_data["expediteur"] and 
+                metadata.get("destinataire") == dri_depart_data["destinataire"] and
+                metadata.get("objet") == dri_depart_data["objet"]):
+                results.log_success("DRI Depart metadata values validation")
+            else:
+                results.log_failure("DRI Depart metadata values", "Metadata values not stored correctly")
+                
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("DRI Depart document creation", error_msg)
+    
+    finally:
+        # Clean up temporary file
+        os.unlink(temp_file_path)
+    
+    # Test 2: Reference Generation (DRI-2025-XXX format)
+    if dri_depart_id:
+        response = make_request("GET", f"/documents/{dri_depart_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            doc = response.json()
+            reference = doc.get("reference", "")
+            
+            # Check if reference follows DRI-2025-XXX pattern
+            import re
+            if re.match(r"^DRI-2025-\d{3}$", reference):
+                results.log_success("DRI Depart reference generation (DRI-2025-XXX format)")
+            else:
+                results.log_failure("DRI Depart reference generation", f"Invalid reference format: {reference}")
+        else:
+            results.log_failure("DRI Depart reference verification", "Could not retrieve document")
+    
+    # Test 3: Document Retrieval with pagination
+    response = make_request("GET", "/documents/dri-depart?page=1&limit=10", auth_token=user_token)
+    if response and response.status_code == 200:
+        data = response.json()
+        if isinstance(data, dict) and "documents" in data and "total" in data and "page" in data:
+            documents = data["documents"]
+            if isinstance(documents, list):
+                results.log_success("DRI Depart document retrieval with pagination")
+                
+                # Verify pagination structure
+                required_pagination_fields = ["total", "page", "limit", "pages"]
+                missing_pagination_fields = [field for field in required_pagination_fields if field not in data]
+                if not missing_pagination_fields:
+                    results.log_success("DRI Depart pagination structure validation")
+                else:
+                    results.log_failure("DRI Depart pagination structure", f"Missing fields: {missing_pagination_fields}")
+                
+                # Verify that all returned documents are DRI Depart type
+                if documents:
+                    all_dri_type = all(doc["document_type"] == "dri_deport" for doc in documents)
+                    if all_dri_type:
+                        results.log_success("DRI Depart type filter accuracy")
+                    else:
+                        results.log_failure("DRI Depart type filter", "Filter returned wrong document types")
+            else:
+                results.log_failure("DRI Depart document retrieval", "Invalid documents format")
+        else:
+            results.log_failure("DRI Depart document retrieval", "Invalid pagination response format")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("DRI Depart document retrieval", error_msg)
+    
+    # Test 4: Create another DRI Depart to test reference increment
+    dri_depart_data2 = {
+        "date": "2025-01-20",
+        "expediteur": "Direction Regionale d'Ouargla",
+        "expediteur_reference": "DRO/2025/002",
+        "expediteur_date": "2025-01-19",
+        "destinataire": "Direction Generale Sonatrach",
+        "objet": "Demande d'autorisation pour travaux de maintenance"
+    }
+    
+    # Create second document without file
+    files2 = {
+        'date': (None, dri_depart_data2['date']),
+        'expediteur': (None, dri_depart_data2['expediteur']),
+        'expediteur_reference': (None, dri_depart_data2['expediteur_reference']),
+        'expediteur_date': (None, dri_depart_data2['expediteur_date']),
+        'destinataire': (None, dri_depart_data2['destinataire']),
+        'objet': (None, dri_depart_data2['objet'])
+    }
+    
+    response = make_request("POST", "/documents/dri-depart", files=files2, auth_token=user_token)
+    dri_depart_id2 = None
+    if response and response.status_code == 200:
+        doc = response.json()
+        dri_depart_id2 = doc["id"]
+        reference2 = doc.get("reference", "")
+        
+        # Verify reference increment
+        if reference2 and reference2 != (doc.get("reference") if dri_depart_id else ""):
+            results.log_success("DRI Depart reference increment")
+        else:
+            results.log_failure("DRI Depart reference increment", f"Reference not incremented: {reference2}")
+    
+    # Test 5: Update DRI Depart document
+    if dri_depart_id:
+        # Create a new test file for update
+        update_content = b"Contenu mis a jour du rapport DRI Depart"
+        
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
+            temp_file.write(update_content)
+            temp_file_path = temp_file.name
+        
+        try:
+            with open(temp_file_path, 'rb') as f:
+                update_files = {
+                    'files': ('rapport_dri_janvier_v2.pdf', f, 'application/pdf'),
+                    'date': (None, "2025-01-16"),  # Updated date
+                    'expediteur': (None, dri_depart_data['expediteur']),
+                    'expediteur_reference': (None, "DRH/2025/001-REV"),  # Updated reference
+                    'expediteur_date': (None, dri_depart_data['expediteur_date']),
+                    'destinataire': (None, dri_depart_data['destinataire']),
+                    'objet': (None, "Rapport mensuel des activites de production - Janvier 2025 (Version revisee)")  # Updated object
+                }
+                
+                response = make_request("PUT", f"/documents/dri-depart/{dri_depart_id}", files=update_files, auth_token=user_token)
+            
+            if response and response.status_code == 200:
+                doc = response.json()
+                updated_metadata = doc.get("metadata", {})
+                
+                if (updated_metadata.get("date") == "2025-01-16" and
+                    updated_metadata.get("expediteur_reference") == "DRH/2025/001-REV"):
+                    results.log_success("DRI Depart document update")
+                else:
+                    results.log_failure("DRI Depart document update", "Metadata not updated correctly")
+            else:
+                error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+                results.log_failure("DRI Depart document update", error_msg)
+        
+        finally:
+            os.unlink(temp_file_path)
+    
+    # Test 6: File Upload functionality verification
+    if dri_depart_id:
+        response = make_request("GET", f"/documents/{dri_depart_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            doc = response.json()
+            metadata = doc.get("metadata", {})
+            files_info = metadata.get("files", [])
+            
+            if files_info and len(files_info) > 0:
+                file_info = files_info[0]
+                required_file_fields = ["original_name", "stored_name", "file_path", "file_size", "mime_type"]
+                missing_file_fields = [field for field in required_file_fields if field not in file_info]
+                
+                if not missing_file_fields:
+                    results.log_success("DRI Depart file upload metadata validation")
+                else:
+                    results.log_failure("DRI Depart file upload", f"Missing file metadata fields: {missing_file_fields}")
+            else:
+                results.log_failure("DRI Depart file upload", "No file information found in metadata")
+    
+    # Test 7: Dashboard statistics include DRI Depart count
+    response = make_request("GET", "/dashboard/stats", auth_token=user_token)
+    if response and response.status_code == 200:
+        stats = response.json()
+        dri_count = stats.get("dri_deport", 0)
+        
+        if dri_count >= 1:  # Should have at least the documents we created
+            results.log_success("DRI Depart count in dashboard statistics")
+        else:
+            results.log_failure("DRI Depart dashboard stats", f"Expected DRI count >= 1, got {dri_count}")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("DRI Depart dashboard statistics", error_msg)
+    
+    # Test 8: Permission-based access control
+    if dri_depart_id:
+        # Test that admin can access DRI Depart document
+        response = make_request("GET", f"/documents/{dri_depart_id}", auth_token=admin_token)
+        if response and response.status_code == 200:
+            results.log_success("Admin access to DRI Depart document")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("Admin access to DRI Depart document", error_msg)
+        
+        # Test that user can access their own DRI Depart document
+        response = make_request("GET", f"/documents/{dri_depart_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            results.log_success("User access to own DRI Depart document")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("User access to own DRI Depart document", error_msg)
+    
+    # Test 9: Delete DRI Depart documents (cleanup)
+    if dri_depart_id:
+        response = make_request("DELETE", f"/documents/{dri_depart_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            results.log_success("DRI Depart document deletion")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("DRI Depart document deletion", error_msg)
+    
+    # Clean up second document
+    if dri_depart_id2:
+        make_request("DELETE", f"/documents/{dri_depart_id2}", auth_token=user_token)
+
 def test_document_deletion():
     """Test document deletion functionality"""
     print("\n🗑️ Testing Document Deletion...")
