@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import CourrierDepartForm from './CourrierDepartForm';
 import CourrierDepartViewModal from './CourrierDepartViewModal';
-import { PlusIcon, HashtagIcon, EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, HashtagIcon, EyeIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon, PaperAirplaneIcon, ArrowDownTrayIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 import { ModernAlert } from '../Common/ModernAlert';
 
 const CourrierDepartList = () => {
