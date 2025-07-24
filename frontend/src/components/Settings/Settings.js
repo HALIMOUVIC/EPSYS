@@ -5,7 +5,6 @@ import {
   CogIcon,
   BellIcon,
   ShieldCheckIcon,
-  UserIcon,
   GlobeAltIcon,
   DocumentTextIcon,
   KeyIcon,
