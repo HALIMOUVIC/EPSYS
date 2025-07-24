@@ -17,7 +17,8 @@ import {
   ArrowLeftIcon,
   XMarkIcon,
   CheckIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline';
 
 const FileManager = () => {
