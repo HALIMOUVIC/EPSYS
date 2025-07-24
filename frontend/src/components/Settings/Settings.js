@@ -86,14 +86,28 @@ const Settings = () => {
     }
   };
 
-  const handleNotificationChange = (key) => {
+  const handleNotificationChange = async (key) => {
     if (!settings) return;
-    updateSettings({ [key]: !settings[key] });
+    const newValue = !settings[key];
+    
+    // Update local state immediately for better UX
+    setSettings({...settings, [key]: newValue});
+    
+    // Update backend
+    await updateSettings({ [key]: newValue });
   };
 
-  const handleInputChange = (key, value) => {
+  const handleInputChange = async (key, value) => {
     if (!settings) return;
-    updateSettings({ [key]: value });
+    
+    // Update local state immediately for better UX
+    setSettings({...settings, [key]: value});
+    
+    // Debounced update to backend
+    clearTimeout(window.settingsTimeout);
+    window.settingsTimeout = setTimeout(() => {
+      updateSettings({ [key]: value });
+    }, 500);
   };
 
   const handlePasswordChange = async (e) => {
