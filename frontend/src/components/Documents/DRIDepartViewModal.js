@@ -25,6 +25,31 @@ const DRIDepartViewModal = ({ document, isOpen, onClose }) => {
     }
   };
 
+  const downloadFile = async (filePath, originalName) => {
+    try {
+      const response = await fetch(`/api/documents/download/${encodeURIComponent(filePath)}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', originalName);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      alert('Erreur lors du téléchargement du fichier');
+    }
+  };
+
   const canPreview = (filename) => {
     const extension = filename.split('.').pop().toLowerCase();
     return ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'txt', 'md'].includes(extension);
