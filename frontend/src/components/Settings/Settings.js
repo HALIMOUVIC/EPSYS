@@ -19,7 +19,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const Settings = () => {
-  const { user, updateSessionTimeout, getRemainingTime, sessionTimeout, forceSessionExpiry } = useAuth();
+  const { user, updateSessionTimeout, getRemainingTime, sessionTimeout, forceSessionExpiry, getSessionStatus } = useAuth();
   const { t, changeLanguage, currentLanguage, syncWithUserSettings } = useLanguage();
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
