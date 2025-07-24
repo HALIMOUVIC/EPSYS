@@ -272,29 +272,6 @@ export const AuthProvider = ({ children }) => {
     window.location.href = '/login';
   };
 
-  const getSessionStatus = () => {
-    if (!user || sessionTimeout <= 0) return null;
-    
-    const now = Date.now();
-    const timeoutMs = sessionTimeout * 60 * 1000;
-    const timeSinceLastActivity = now - lastActivityRef.current;
-    const remainingMs = timeoutMs - timeSinceLastActivity;
-    
-    return {
-      sessionTimeout,
-      timeSinceLastActivity: Math.floor(timeSinceLastActivity / 1000),
-      remainingSeconds: Math.max(0, Math.floor(remainingMs / 1000)),
-      remainingMinutes: Math.max(0, Math.ceil(remainingMs / (60 * 1000))),
-      lastActivity: new Date(lastActivityRef.current).toLocaleTimeString(),
-      shouldExpire: timeSinceLastActivity >= timeoutMs
-    };
-  };
-
-  const forceSessionExpiry = () => {
-    console.log('🧪 Force session expiry triggered for testing');
-    handleSessionExpiry();
-  };
-
   const value = {
     user,
     login,
@@ -304,8 +281,6 @@ export const AuthProvider = ({ children }) => {
     updateSessionTimeout,
     sessionTimeout,
     getRemainingTime,
-    getSessionStatus, // For debugging
-    forceSessionExpiry, // For testing
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin'
   };
@@ -313,6 +288,11 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={value}>
       {children}
+      <SessionExpiredModal 
+        isOpen={showSessionExpiredModal}
+        sessionTimeout={sessionTimeout}
+        onLoginRedirect={handleLoginRedirect}
+      />
     </AuthContext.Provider>
   );
 };
