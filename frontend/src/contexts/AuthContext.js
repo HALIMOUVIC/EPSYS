@@ -194,12 +194,23 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateSessionTimeout = (newTimeout) => {
+    console.log(`🔄 Updating session timeout from ${sessionTimeout}min to ${newTimeout}min`);
     setSessionTimeout(newTimeout);
     lastActivityRef.current = Date.now(); // Reset activity timer when timeout is updated
     
-    // Restart session timer with new timeout
-    startSessionTimer();
+    // Important: Restart session timer with new timeout
+    setTimeout(() => {
+      startSessionTimer();
+    }, 100); // Small delay to ensure state is updated
   };
+
+  // Add useEffect to restart timer when sessionTimeout changes
+  useEffect(() => {
+    if (user && sessionTimeout > 0) {
+      console.log(`🔄 SessionTimeout changed to ${sessionTimeout}min, restarting timer`);
+      startSessionTimer();
+    }
+  }, [sessionTimeout]); // Restart timer when sessionTimeout changes
 
   const getRemainingTime = () => {
     if (!user || sessionTimeout <= 0) return null;
