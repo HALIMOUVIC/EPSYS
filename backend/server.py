@@ -880,7 +880,7 @@ async def get_folders(
         "parent_folder_id": current_folder_info["parent_id"] if current_folder_info else None
     }
 
-@api_router.post("/file-manager/folders", response_model=Folder)
+@api_router.post("/file-manager/folders")
 async def create_folder(
     folder_data: FolderCreate,
     current_user: User = Depends(get_current_user)
@@ -908,11 +908,17 @@ async def create_folder(
     
     await db.folders.insert_one(folder.dict())
     
-    # Add created_by_name for frontend display
-    folder_dict = folder.dict()
-    folder_dict["created_by_name"] = current_user.full_name
-    
-    return folder_dict
+    # Return folder with created_by_name for frontend display
+    return {
+        "id": folder.id,
+        "name": folder.name,
+        "parent_id": folder.parent_id,
+        "path": folder.path,
+        "created_by": folder.created_by,
+        "created_by_name": current_user.full_name,
+        "created_at": folder.created_at,
+        "updated_at": folder.updated_at
+    }
 
 @api_router.put("/file-manager/folders/{folder_id}", response_model=Folder)
 async def update_folder(
