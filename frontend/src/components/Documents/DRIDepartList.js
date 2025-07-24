@@ -238,9 +238,7 @@ const DRIDepartList = () => {
                   <tr key={document.id} className={`hover:bg-indigo-50 transition-all duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-indigo-50/50'}`}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-semibold text-indigo-700 flex items-center">
-                        <span className="bg-indigo-100 p-1.5 rounded-lg mr-2 flex items-center justify-center w-8 h-8">
-                          <i className="fas fa-hashtag text-indigo-600"></i>
-                        </span>
+                        <HashtagIcon className="w-4 h-4 text-indigo-600 mr-2" />
                         <span>{document.reference}</span>
                       </div>
                     </td>
