@@ -47,14 +47,19 @@ const CourrierArriveeList = () => {
   };
 
   const handleDelete = async (documentId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce courrier ?')) {
+    const confirmed = await ModernAlert.confirm(
+      'Supprimer le document', 
+      'Êtes-vous sûr de vouloir supprimer ce courrier arrivé ? Cette action est irréversible.'
+    );
+    
+    if (confirmed) {
       try {
         await axios.delete(`/documents/${documentId}`);
-        setDocuments(documents.filter(doc => doc.id !== documentId));
-        alert('Courrier supprimé avec succès');
+        ModernAlert.success('Succès', 'Courrier supprimé avec succès');
+        fetchDocuments();
       } catch (error) {
-        console.error('Failed to delete document:', error);
-        alert('Erreur lors de la suppression');
+        console.error('Error deleting document:', error);
+        ModernAlert.error('Erreur', 'Erreur lors de la suppression du courrier');
       }
     }
   };
