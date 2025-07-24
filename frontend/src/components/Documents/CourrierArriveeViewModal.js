@@ -217,7 +217,7 @@ const CourrierArriveeViewModal = ({ document, isOpen, onClose }) => {
                       <DocumentTextIcon className="w-5 h-5 text-indigo-600" />
                       <label className="text-sm font-semibold text-gray-700">Objet</label>
                     </div>
-                    <p className="text-gray-900 leading-relaxed">{document.metadata.objet}</p>
+                    <p className="text-gray-900 leading-relaxed">{document.metadata?.objet || document.title || '-'}</p>
                   </div>
                 </div>
 
