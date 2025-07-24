@@ -33,12 +33,14 @@ const CourrierArriveeList = () => {
 
   const fetchDocuments = async () => {
     try {
-      const response = await axios.get('/documents', {
+      setLoading(true);
+      const response = await axios.get(`/documents`, {
         params: { document_type: 'incoming_mail' }
       });
       setDocuments(response.data);
     } catch (error) {
-      console.error('Failed to fetch documents:', error);
+      console.error('Error fetching courrier arrivee documents:', error);
+      setError('Erreur lors du chargement des documents');
     } finally {
       setLoading(false);
     }
