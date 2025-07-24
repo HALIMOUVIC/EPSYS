@@ -849,10 +849,35 @@ async def get_folders(
         user = await db.users.find_one({"id": folder["created_by"]})
         folder["created_by_name"] = user["full_name"] if user else "Unknown"
     
+    # Get current folder info and navigation path
+    current_folder_info = None
+    navigation_path = []
+    
+    if parent_id:
+        current_folder = await db.folders.find_one({"id": parent_id})
+        if current_folder:
+            current_folder_info = current_folder
+            # Build navigation breadcrumb
+            path_parts = current_folder["path"].strip("/").split("/") if current_folder["path"] != "/" else []
+            current_path = ""
+            for part in path_parts:
+                current_path = f"{current_path}/{part}" if current_path else f"/{part}"
+                # Find the folder for this path part
+                folder_for_part = await db.folders.find_one({"path": current_path})
+                if folder_for_part:
+                    navigation_path.append({
+                        "id": folder_for_part["id"],
+                        "name": folder_for_part["name"],
+                        "path": current_path
+                    })
+    
     return {
         "folders": [Folder(**folder) for folder in folders],
         "files": [FileItem(**file) for file in files],
-        "current_path": await get_folder_path(parent_id) if parent_id else "/"
+        "current_path": current_folder_info["path"] if current_folder_info else "/",
+        "current_folder": current_folder_info,
+        "navigation_path": navigation_path,
+        "parent_folder_id": current_folder_info["parent_id"] if current_folder_info else None
     }
 
 @api_router.post("/file-manager/folders", response_model=Folder)
