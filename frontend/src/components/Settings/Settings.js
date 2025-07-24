@@ -370,6 +370,19 @@ const Settings = () => {
                   </p>
                 )}
               </div>
+              
+              {/* Test Button for Session Expiry */}
+              <div className="mt-3">
+                <button
+                  onClick={forceSessionExpiry}
+                  className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  🧪 Tester l'expiration de session
+                </button>
+                <p className="text-xs text-gray-500 mt-1">
+                  Cliquez pour tester immédiatement l'expiration de session
+                </p>
+              </div>
             </div>
 
             <div className="pt-4 border-t border-gray-200">
