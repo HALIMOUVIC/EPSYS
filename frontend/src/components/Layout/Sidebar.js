@@ -24,21 +24,20 @@ const Sidebar = () => {
   const location = useLocation();
 
   const navigationItems = [
-    { name: 'Dashboard', href: '/', icon: HomeIcon },
-    { name: 'Courrier Départ', href: '/outgoing-mail', icon: PaperAirplaneIcon },
-    { name: 'Courrier Arrivé', href: '/incoming-mail', icon: InboxIcon },
-    { name: 'Approbation OM', href: '/om-approval', icon: DocumentCheckIcon },
-    { name: 'DRI Départ', href: '/dri-depart', icon: ChartBarIcon },
-    { name: 'File Manager', href: '/file-manager', icon: FolderIcon },
-    { name: 'Messages', href: '/messages', icon: ChatBubbleLeftIcon },
-    { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
-    { name: 'Mon Profil', href: '/profile', icon: UserIcon },
-    { name: 'Reports', href: '/reports', icon: DocumentChartBarIcon },
+    { name: t('dashboard'), href: '/', icon: HomeIcon },
+    { name: t('outgoingMail'), href: '/outgoing-mail', icon: PaperAirplaneIcon },
+    { name: t('incomingMail'), href: '/incoming-mail', icon: InboxIcon },
+    { name: t('omApproval'), href: '/om-approval', icon: DocumentCheckIcon },
+    { name: t('driDepart'), href: '/dri-depart', icon: ChartBarIcon },
+    { name: t('fileManager'), href: '/file-manager', icon: FolderIcon },
+    { name: t('messages'), href: '/messages', icon: ChatBubbleLeftIcon },
+    { name: t('calendar'), href: '/calendar', icon: CalendarIcon },
+    { name: t('reports'), href: '/reports', icon: DocumentChartBarIcon },
   ];
 
   const adminItems = [
-    { name: 'User Management', href: '/user-management', icon: UsersIcon },
-    { name: 'Paramètres', href: '/settings', icon: CogIcon },
+    { name: t('userManagement'), href: '/user-management', icon: UsersIcon },
+    { name: t('settings'), href: '/settings', icon: CogIcon },
   ];
 
   const userMenuItems = [
