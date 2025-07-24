@@ -141,131 +141,121 @@ const CourrierDepartList = () => {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Documents Table */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800">Liste des Courriers Départ</h3>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Référence
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date Départ
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Expéditeur
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Destinataire
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Objet
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Fichiers
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredDocuments.map((doc) => (
-                <tr key={doc.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {doc.reference || `DEP-${new Date(doc.created_at).getFullYear()}-${String(doc.id).padStart(3, '0')}`}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {doc.metadata?.date_depart ? formatDate(doc.metadata.date_depart) : formatDate(doc.created_at)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {doc.metadata?.expediteur || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {doc.metadata?.destinataire || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                    {doc.metadata?.objet || doc.title}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {doc.file_name ? (
-                      <div className="flex items-center space-x-2">
-                        <PaperClipIcon className="w-4 h-4 text-gray-400" />
-                        <a
-                          href={`${process.env.REACT_APP_BACKEND_URL}/uploads/${doc.file_path?.split('/').pop()}`}
-                          download={doc.file_name}
-                          className="text-blue-600 hover:text-blue-800 text-sm"
-                        >
-                          {doc.file_name}
-                        </a>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400 text-sm">Aucun fichier</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                    <div className="flex items-center justify-center space-x-2">
-                      <button
-                        onClick={() => window.open(`/documents/${doc.id}`, '_blank')}
-                        className="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50"
-                        title="Voir"
-                      >
-                        <EyeIcon className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(doc)}
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
-                        title="Modifier"
-                      >
-                        <PencilIcon className="w-4 h-4" />
-                      </button>
-                      {doc.file_name && (
-                        <a
-                          href={`${process.env.REACT_APP_BACKEND_URL}/uploads/${doc.file_path?.split('/').pop()}`}
-                          download={doc.file_name}
-                          className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
-                          title="Télécharger"
-                        >
-                          <ArrowDownTrayIcon className="w-4 h-4" />
-                        </a>
-                      )}
-                      <button
-                        onClick={() => handleDelete(doc.id)}
-                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
-                        title="Supprimer"
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-blue-100/80">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">
+                    Référence
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">
+                    Date Départ
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">
+                    Expéditeur
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">
+                    Destinataire
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">
+                    Objet
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">
+                    Fichiers
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-blue-700 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {filteredDocuments.length === 0 && (
-          <div className="text-center py-12">
-            <PaperAirplaneIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun courrier départ</h3>
-            <p className="text-gray-600 mb-4">
-              {searchTerm ? 'Aucun résultat pour votre recherche.' : 'Commencez par créer votre premier courrier départ.'}
-            </p>
-            <button
-              onClick={() => setShowForm(true)}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <PlusIcon className="w-5 h-5 mr-2" />
-              Nouveau Courrier
-            </button>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredDocuments.map((document) => (
+                  <tr key={document.id} className="hover:bg-gray-50 transition-colors duration-200">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-semibold text-blue-700 flex items-center">
+                        <HashtagIcon className="w-4 h-4 text-blue-600 mr-2" />
+                        <span>{document.reference}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {formatDate(document.metadata?.date || document.created_at)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {document.metadata?.expediteur || '-'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {document.metadata?.destinataire || '-'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 max-w-xs truncate">
+                        {document.metadata?.objet || document.title}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        {document.metadata?.files && document.metadata.files.length > 0 ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {document.metadata.files.length} fichier{document.metadata.files.length > 1 ? 's' : ''}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-400">Aucun fichier</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="flex items-center justify-center space-x-2">
+                        <button
+                          onClick={() => handleView(document)}
+                          className="text-blue-600 hover:text-white bg-blue-100 hover:bg-blue-600 p-2 rounded-full transition-all duration-300 transform hover:scale-110 shadow-sm hover:shadow-md"
+                          title="Voir les détails"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleEdit(document)}
+                          className="text-indigo-600 hover:text-white bg-indigo-100 hover:bg-indigo-600 p-2 rounded-full transition-all duration-300 transform hover:scale-110 shadow-sm hover:shadow-md"
+                          title="Modifier ce courrier"
+                        >
+                          <PencilIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(document.id)}
+                          className="text-red-600 hover:text-white bg-red-100 hover:bg-red-600 p-2 rounded-full transition-all duration-300 transform hover:scale-110 shadow-sm hover:shadow-md"
+                          title="Supprimer ce courrier"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
+
+      {/* Floating Action Button */}
+      <button
+        onClick={() => setShowForm(true)}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 flex items-center justify-center z-40 group"
+        title="Nouveau Courrier Départ"
+      >
+        <PlusIcon className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
+      </button>
     </div>
   );
 };
