@@ -930,6 +930,11 @@ async def update_folder(
     await update_subfolder_paths(folder_id, new_full_path)
     
     updated_folder = await db.folders.find_one({"id": folder_id})
+    
+    # Add created_by_name for frontend display
+    user = await db.users.find_one({"id": updated_folder["created_by"]})
+    updated_folder["created_by_name"] = user["full_name"] if user else "Unknown"
+    
     return Folder(**updated_folder)
 
 @api_router.delete("/file-manager/folders/{folder_id}")
