@@ -276,19 +276,23 @@ const DRIDepartViewModal = ({ document, isOpen, onClose }) => {
                       </button>
                     </div>
                     <div className="flex-1 p-4">
-                      {previewFile.type.includes('pdf') ? (
+                      {previewFile.type.includes('pdf') || previewFile.name.toLowerCase().endsWith('.pdf') ? (
                         <iframe
                           src={previewFile.url}
                           className="w-full h-full rounded border"
                           title={previewFile.name}
                         />
-                      ) : previewFile.type.includes('image') ? (
-                        <img
-                          src={previewFile.url}
-                          alt={previewFile.name}
-                          className="max-w-full max-h-full object-contain mx-auto"
-                        />
-                      ) : previewFile.type.includes('text') ? (
+                      ) : (previewFile.type.includes('image') || 
+                           previewFile.name.toLowerCase().match(/\.(jpg|jpeg|png|gif)$/)) ? (
+                        <div className="h-full flex items-center justify-center">
+                          <img
+                            src={previewFile.url}
+                            alt={previewFile.name}
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        </div>
+                      ) : (previewFile.type.includes('text') || 
+                           previewFile.name.toLowerCase().match(/\.(txt|md)$/)) ? (
                         <iframe
                           src={previewFile.url}
                           className="w-full h-full rounded border bg-white"
@@ -296,7 +300,17 @@ const DRIDepartViewModal = ({ document, isOpen, onClose }) => {
                         />
                       ) : (
                         <div className="flex items-center justify-center h-full text-gray-500">
-                          <p>Aperçu non disponible pour ce type de fichier</p>
+                          <div className="text-center">
+                            <DocumentTextIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                            <p className="text-lg font-medium">Aperçu non disponible</p>
+                            <p className="text-sm">Ce type de fichier ne peut pas être prévisualisé</p>
+                            <button
+                              onClick={() => downloadFile(previewFile.url, previewFile.name)}
+                              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                            >
+                              Télécharger le fichier
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
