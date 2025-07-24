@@ -1031,6 +1031,9 @@ def run_all_tests():
         # OM Approval specific tests
         test_om_approval_functionality()
         
+        # DRI Depart specific tests
+        test_dri_depart_functionality()
+        
         # Role-based access tests
         test_role_based_access()
         
