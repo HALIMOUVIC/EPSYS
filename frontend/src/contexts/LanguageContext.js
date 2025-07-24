@@ -163,34 +163,30 @@ export const LanguageProvider = ({ children }) => {
   const [isRTL, setIsRTL] = useState(false);
 
   useEffect(() => {
-    // Load language from localStorage or user settings
-    const savedLanguage = localStorage.getItem('userLanguage') || 'fr';
-    setCurrentLanguage(savedLanguage);
-    setIsRTL(savedLanguage === 'ar');
-    
-    // Apply RTL to document
-    if (savedLanguage === 'ar') {
+    // Load language from localStorage first, then user settings
+    const savedLanguage = localStorage.getItem('userLanguage');
+    if (savedLanguage) {
+      setCurrentLanguage(savedLanguage);
+      setIsRTL(savedLanguage === 'ar');
+      applyLanguageToDocument(savedLanguage);
+    }
+  }, []);
+
+  const applyLanguageToDocument = (language) => {
+    if (language === 'ar') {
       document.documentElement.dir = 'rtl';
       document.documentElement.lang = 'ar';
     } else {
       document.documentElement.dir = 'ltr';
-      document.documentElement.lang = savedLanguage;
+      document.documentElement.lang = language;
     }
-  }, []);
+  };
 
   const changeLanguage = (newLanguage) => {
     setCurrentLanguage(newLanguage);
     setIsRTL(newLanguage === 'ar');
     localStorage.setItem('userLanguage', newLanguage);
-    
-    // Apply RTL to document
-    if (newLanguage === 'ar') {
-      document.documentElement.dir = 'rtl';
-      document.documentElement.lang = 'ar';
-    } else {
-      document.documentElement.dir = 'ltr';
-      document.documentElement.lang = newLanguage;
-    }
+    applyLanguageToDocument(newLanguage);
   };
 
   const t = (key) => {
