@@ -16,6 +16,7 @@ import OMApprovalList from "./components/Documents/OMApprovalList";
 import Messages from "./components/Messages/Messages";
 import FileManager from "./components/FileManager/FileManager";
 import Calendar from "./components/Calendar/Calendar";
+import Profile from "./components/Profile/Profile";
 import UserManagement from "./components/UserManagement/UserManagement";
 import Settings from "./components/Settings/Settings";
 import {
