@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { AuthContext } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   FolderIcon,
   DocumentIcon,
@@ -18,7 +18,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const FileManager = () => {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [folders, setFolders] = useState([]);
   const [files, setFiles] = useState([]);
   const [currentFolder, setCurrentFolder] = useState(null);
@@ -41,7 +41,7 @@ const FileManager = () => {
   const fetchFolderContents = async (folderId) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const url = folderId 
         ? `${backendUrl}/api/file-manager/folders?parent_id=${folderId}`
         : `${backendUrl}/api/file-manager/folders`;
@@ -69,7 +69,7 @@ const FileManager = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await axios.get(`${backendUrl}/api/file-manager/search?query=${encodeURIComponent(searchTerm)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -85,7 +85,7 @@ const FileManager = () => {
     if (!folderName.trim()) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await axios.post(`${backendUrl}/api/file-manager/folders`, {
         name: folderName,
         parent_id: currentFolder
@@ -107,7 +107,7 @@ const FileManager = () => {
     if (!folderName.trim() || !editingFolder) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await axios.put(`${backendUrl}/api/file-manager/folders/${editingFolder.id}`, {
         name: folderName
       }, {
@@ -129,7 +129,7 @@ const FileManager = () => {
     if (!window.confirm(`Êtes-vous sûr de vouloir supprimer le dossier "${folder.name}" et tout son contenu ?`)) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       await axios.delete(`${backendUrl}/api/file-manager/folders/${folder.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -148,7 +148,7 @@ const FileManager = () => {
 
     setUploadingFile(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const formData = new FormData();
       
       selectedFiles.forEach(file => {
@@ -183,7 +183,7 @@ const FileManager = () => {
     if (!window.confirm(`Êtes-vous sûr de vouloir supprimer le fichier "${file.name}" ?`)) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       await axios.delete(`${backendUrl}/api/file-manager/files/${file.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -198,7 +198,7 @@ const FileManager = () => {
 
   const downloadFile = async (file) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       window.open(`${backendUrl}/api/file-manager/download/${file.id}?token=${token}`, '_blank');
     } catch (error) {
       console.error('Failed to download file:', error);
