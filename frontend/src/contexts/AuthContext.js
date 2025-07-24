@@ -147,15 +147,17 @@ export const AuthProvider = ({ children }) => {
       clearInterval(sessionTimerRef.current);
     }
     
-    // Check session expiry every 30 seconds
+    // Check session expiry every 10 seconds for more responsive logout
     sessionTimerRef.current = setInterval(() => {
       if (user && sessionTimeout > 0) {
         const now = Date.now();
         const timeoutMs = sessionTimeout * 60 * 1000; // Convert minutes to milliseconds
         const timeSinceLastActivity = now - lastActivityRef.current;
 
+        console.log(`Session check: ${Math.floor(timeSinceLastActivity / 1000)}s since last activity, timeout: ${sessionTimeout}min`);
+
         if (timeSinceLastActivity >= timeoutMs) {
-          console.log(`Session expired after ${sessionTimeout} minutes of inactivity`);
+          console.log(`Session expired after ${sessionTimeout} minutes of inactivity - TRIGGERING LOGOUT`);
           
           // Clear the timer before logout to prevent multiple calls
           if (sessionTimerRef.current) {
@@ -163,25 +165,26 @@ export const AuthProvider = ({ children }) => {
             sessionTimerRef.current = null;
           }
           
-          // Perform logout
+          // Perform logout immediately
           handleSessionExpiry();
         }
       }
-    }, 30000);
+    }, 10000); // Check every 10 seconds instead of 30
   };
 
   const handleSessionExpiry = () => {
-    // Clean logout without page reload
+    console.log('handleSessionExpiry called - starting logout process');
+    
+    // Clean logout
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     setUser(null);
     
-    // Show alert and redirect
+    // Show alert
     alert(`Votre session a expiré après ${sessionTimeout} minute(s) d'inactivité. Veuillez vous reconnecter.`);
     
-    // Force redirect to login without page reload
-    window.history.pushState({}, '', '/login');
-    window.location.reload();
+    // Force redirect to login page
+    window.location.href = '/login';
   };
 
   const updateSessionTimeout = (newTimeout) => {
