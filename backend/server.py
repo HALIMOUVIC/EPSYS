@@ -835,50 +835,59 @@ async def get_folders(
     current_user: User = Depends(get_current_user)
 ):
     """Get folders and files in a specific directory"""
-    query = {"parent_id": parent_id}
-    
-    # Get folders
-    folders = await db.folders.find(query).sort("name", 1).to_list(100)
-    
-    # Get files in this directory
-    file_query = {"folder_id": parent_id}
-    files = await db.file_items.find(file_query).sort("name", 1).to_list(100)
-    
-    # Get user information for folders
-    for folder in folders:
-        user = await db.users.find_one({"id": folder["created_by"]})
-        folder["created_by_name"] = user["full_name"] if user else "Unknown"
-    
-    # Get current folder info and navigation path
-    current_folder_info = None
-    navigation_path = []
-    
-    if parent_id:
-        current_folder = await db.folders.find_one({"id": parent_id})
-        if current_folder:
-            current_folder_info = current_folder
-            # Build navigation breadcrumb
-            path_parts = current_folder["path"].strip("/").split("/") if current_folder["path"] != "/" else []
-            current_path = ""
-            for part in path_parts:
-                current_path = f"{current_path}/{part}" if current_path else f"/{part}"
-                # Find the folder for this path part
-                folder_for_part = await db.folders.find_one({"path": current_path})
-                if folder_for_part:
-                    navigation_path.append({
-                        "id": folder_for_part["id"],
-                        "name": folder_for_part["name"],
-                        "path": current_path
-                    })
-    
-    return {
-        "folders": [Folder(**folder) for folder in folders],
-        "files": [FileItem(**file) for file in files],
-        "current_path": current_folder_info["path"] if current_folder_info else "/",
-        "current_folder": current_folder_info,
-        "navigation_path": navigation_path,
-        "parent_folder_id": current_folder_info["parent_id"] if current_folder_info else None
-    }
+    try:
+        query = {"parent_id": parent_id}
+        
+        # Get folders
+        folders = await db.folders.find(query).sort("name", 1).to_list(100)
+        
+        # Get files in this directory
+        file_query = {"folder_id": parent_id}
+        files = await db.file_items.find(file_query).sort("name", 1).to_list(100)
+        
+        # Get user information for folders
+        for folder in folders:
+            user = await db.users.find_one({"id": folder["created_by"]})
+            folder["created_by_name"] = user["full_name"] if user else "Unknown"
+        
+        # Get current folder info and navigation path
+        current_folder_info = None
+        navigation_path = []
+        current_path = "/"
+        
+        if parent_id:
+            current_folder = await db.folders.find_one({"id": parent_id})
+            if current_folder:
+                current_folder_info = current_folder
+                current_path = current_folder["path"]
+                
+                # Build navigation breadcrumb more safely
+                if current_folder["path"] and current_folder["path"] != "/":
+                    path_parts = current_folder["path"].strip("/").split("/")
+                    temp_path = ""
+                    for part in path_parts:
+                        temp_path = f"{temp_path}/{part}" if temp_path else f"/{part}"
+                        # Find the folder for this path part
+                        folder_for_part = await db.folders.find_one({"path": temp_path})
+                        if folder_for_part:
+                            navigation_path.append({
+                                "id": folder_for_part["id"],
+                                "name": folder_for_part["name"],
+                                "path": temp_path
+                            })
+        
+        return {
+            "folders": folders,
+            "files": files,
+            "current_path": current_path,
+            "current_folder": current_folder_info,
+            "navigation_path": navigation_path,
+            "parent_folder_id": current_folder_info["parent_id"] if current_folder_info else None
+        }
+        
+    except Exception as e:
+        print(f"Error in get_folders: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to load folder contents: {str(e)}")
 
 @api_router.post("/file-manager/folders")
 async def create_folder(
