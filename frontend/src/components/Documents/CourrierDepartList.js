@@ -1,16 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import CourrierDepartForm from './CourrierDepartForm';
-import {
-  PlusIcon,
-  MagnifyingGlassIcon,
-  EyeIcon,
-  PencilIcon,
-  TrashIcon,
-  PaperAirplaneIcon,
-  ArrowDownTrayIcon,
-  PaperClipIcon
-} from '@heroicons/react/24/outline';
+import CourrierDepartViewModal from './CourrierDepartViewModal';
+import { PlusIcon, HashtagIcon, EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ModernAlert } from '../Common/ModernAlert';
 
 const CourrierDepartList = () => {
   const [documents, setDocuments] = useState([]);
