@@ -183,6 +183,19 @@ export const AuthProvider = ({ children }) => {
     setLastActivity(Date.now());
   };
 
+  const getRemainingTime = () => {
+    if (!user || sessionTimeout <= 0) return null;
+    
+    const now = Date.now();
+    const timeoutMs = sessionTimeout * 60 * 1000;
+    const timeSinceLastActivity = now - lastActivity;
+    const remainingMs = timeoutMs - timeSinceLastActivity;
+    
+    if (remainingMs <= 0) return 0;
+    
+    return Math.ceil(remainingMs / (60 * 1000)); // Return remaining minutes
+  };
+
   const value = {
     user,
     login,
@@ -192,6 +205,7 @@ export const AuthProvider = ({ children }) => {
     updateSessionTimeout,
     sessionTimeout,
     lastActivity,
+    getRemainingTime,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin'
   };
