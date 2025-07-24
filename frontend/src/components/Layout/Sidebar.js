@@ -37,6 +37,11 @@ const Sidebar = () => {
     { name: 'Paramètres', href: '/settings', icon: CogIcon },
   ];
 
+  const userMenuItems = [
+    { name: 'Mon Profil', href: '/profile', icon: 'profile' },
+    { name: 'Paramètres', href: '/settings', icon: 'settings', adminOnly: false },
+  ];
+
   const isActiveLink = (href) => {
     if (href === '/') {
       return location.pathname === '/';
