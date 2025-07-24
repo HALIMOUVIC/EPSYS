@@ -250,6 +250,11 @@ export const AuthProvider = ({ children }) => {
     window.location.href = '/login';
   };
 
+  const forceSessionExpiry = () => {
+    console.log('Force session expiry triggered for testing');
+    handleSessionExpiry();
+  };
+
   const value = {
     user,
     login,
@@ -259,6 +264,7 @@ export const AuthProvider = ({ children }) => {
     updateSessionTimeout,
     sessionTimeout,
     getRemainingTime,
+    forceSessionExpiry, // For testing
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin'
   };
