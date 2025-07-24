@@ -3,7 +3,8 @@ import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
 import DRIDepartForm from './DRIDepartForm';
 import DRIDepartViewModal from './DRIDepartViewModal';
-import { PlusIcon, HashtagIcon, WrenchScrewdriverIcon, EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, HashtagIcon, EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ModernAlert } from '../Common/ModernAlert';
 
 const DRIDepartList = () => {
   const { user } = useAuth();
