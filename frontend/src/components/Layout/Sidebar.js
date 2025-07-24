@@ -30,6 +30,7 @@ const Sidebar = () => {
     { name: 'File Manager', href: '/file-manager', icon: FolderIcon },
     { name: 'Messages', href: '/messages', icon: ChatBubbleLeftIcon },
     { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
+    { name: 'Mon Profil', href: '/profile', icon: UserIcon },
     { name: 'Reports', href: '/reports', icon: DocumentChartBarIcon },
   ];
 
