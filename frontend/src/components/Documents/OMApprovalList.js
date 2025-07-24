@@ -335,55 +335,45 @@ const OMApprovalList = () => {
                 </div>
               </div>
             </div>
-
-            <script>
-              window.addEventListener('beforeprint', function() {
-                const footer = document.createElement('div');
-                footer.style.position = 'fixed';
-                footer.style.bottom = '30px';
-                footer.style.right = '35px';
-                footer.style.fontSize = '8px';
-                footer.style.color = '#000';
-                footer.style.margin = '0';
-                footer.style.textAlign = 'right';
-                footer.innerText = 'Approbation Printed by ENP Application @2025';
-                document.body.appendChild(footer);
-              });
-
-              window.addEventListener('afterprint', function() {
-                const footer = document.querySelector('div[style*="position: fixed"]');
-                if (footer) {
-                  document.body.removeChild(footer);
-                }
-              });
-              
-              // Auto print when document loads
-              window.onload = function() {
-                setTimeout(() => {
-                  window.print();
-                }, 500);
-              };
-            </script>
           </body>
         </html>
       `;
 
-      // Create and print iframe
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-      
-      const doc = iframe.contentWindow.document;
-      doc.open();
-      doc.write(printContent);
-      doc.close();
-
-      iframe.onload = function() {
-        // The print will be triggered by the script in the iframe
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-        }, 2000);
-      };
+      // Use a more reliable approach for printing
+      try {
+        // Open a new window for printing
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        
+        if (printWindow) {
+          printWindow.document.write(printContent);
+          printWindow.document.close();
+          
+          // Wait for content to load, then print
+          printWindow.onload = function() {
+            setTimeout(() => {
+              printWindow.print();
+              // Close window after printing
+              setTimeout(() => {
+                printWindow.close();
+              }, 1000);
+            };
+          };
+        } else {
+          // Fallback: create a blob and download  
+          const blob = new Blob([printContent], { type: 'text/html' });
+          const url = URL.createObjectURL(blob);
+          const link = window.document.createElement('a');
+          link.href = url;
+          link.download = `Ordre_Mission_${document.metadata.fullName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
+          window.document.body.appendChild(link);
+          link.click();
+          window.document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }
+      } catch (error) {
+        console.error('Print error:', error);
+        alert('Erreur lors de l\'impression. Veuillez réessayer.');
+      }
     }
   };
 
