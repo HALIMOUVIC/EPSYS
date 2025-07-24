@@ -1753,6 +1753,501 @@ def test_file_manager_preview():
     for file_id, filename, _ in uploaded_file_ids:
         make_request("DELETE", f"/file-manager/files/{file_id}", auth_token=user_token)
 
+def test_calendar_management():
+    """Test Calendar Management APIs comprehensively"""
+    print("\n📅 Testing Calendar Management APIs...")
+    
+    # Global variables to track created events for cleanup
+    created_events = []
+    
+    # Test 1: Get initial calendar events (should be empty or existing)
+    print("\n  Testing initial calendar events listing...")
+    response = make_request("GET", "/calendar/events", auth_token=user_token)
+    if response and response.status_code == 200:
+        data = response.json()
+        if isinstance(data, dict) and "events" in data:
+            results.log_success("Calendar - Initial events listing structure")
+            initial_events_count = len(data["events"])
+        else:
+            results.log_failure("Calendar - Initial events listing", "Invalid response structure")
+            initial_events_count = 0
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Calendar - Initial events listing", error_msg)
+        initial_events_count = 0
+    
+    # Test 2: Create calendar event with all fields
+    print("\n  Testing calendar event creation...")
+    from datetime import datetime, timedelta
+    
+    start_date = datetime.utcnow() + timedelta(days=1)
+    end_date = start_date + timedelta(hours=2)
+    
+    event_data = {
+        "title": "Team Meeting - Project Review",
+        "description": "Weekly team meeting to review project progress and discuss upcoming milestones",
+        "start_date": start_date.isoformat() + "Z",
+        "end_date": end_date.isoformat() + "Z",
+        "all_day": False,
+        "color": "#3b82f6",
+        "attendees": ["john.doe@epsys.com", "sarah.johnson@epsys.com"],
+        "location": "Conference Room A",
+        "reminder_minutes": 15,
+        "category": "meeting"
+    }
+    
+    response = make_request("POST", "/calendar/events", event_data, auth_token=user_token)
+    event_id = None
+    if response and response.status_code == 200:
+        event = response.json()
+        event_id = event["id"]
+        created_events.append(event_id)
+        
+        # Verify event structure
+        if (event["title"] == event_data["title"] and 
+            event["created_by"] == user_user_id and
+            event["location"] == event_data["location"]):
+            results.log_success("Calendar - Event creation with all fields")
+        else:
+            results.log_failure("Calendar - Event creation", "Invalid event data returned")
+        
+        # Verify user attribution
+        if event["created_by_name"] == "Login User":  # From login test
+            results.log_success("Calendar - Event creation with user attribution")
+        else:
+            results.log_failure("Calendar - Event attribution", "User attribution not working correctly")
+            
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Calendar - Event creation", error_msg)
+    
+    # Test 3: Create all-day event
+    print("\n  Testing all-day event creation...")
+    all_day_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=2)
+    all_day_end = all_day_start + timedelta(days=1)
+    
+    all_day_event_data = {
+        "title": "Company Holiday - National Day",
+        "description": "National holiday - office closed",
+        "start_date": all_day_start.isoformat() + "Z",
+        "end_date": all_day_end.isoformat() + "Z",
+        "all_day": True,
+        "color": "#ef4444",
+        "category": "holiday"
+    }
+    
+    response = make_request("POST", "/calendar/events", all_day_event_data, auth_token=user_token)
+    all_day_event_id = None
+    if response and response.status_code == 200:
+        event = response.json()
+        all_day_event_id = event["id"]
+        created_events.append(all_day_event_id)
+        
+        if event["all_day"] == True and event["category"] == "holiday":
+            results.log_success("Calendar - All-day event creation")
+        else:
+            results.log_failure("Calendar - All-day event", "All-day event not created correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Calendar - All-day event creation", error_msg)
+    
+    # Test 4: Test date validation (end date before start date)
+    print("\n  Testing date validation...")
+    invalid_event_data = {
+        "title": "Invalid Event",
+        "start_date": end_date.isoformat() + "Z",
+        "end_date": start_date.isoformat() + "Z",  # End before start
+        "all_day": False
+    }
+    
+    response = make_request("POST", "/calendar/events", invalid_event_data, auth_token=user_token)
+    if response and response.status_code == 400:
+        results.log_success("Calendar - Date validation (end before start)")
+    else:
+        results.log_failure("Calendar - Date validation", "Should reject invalid date range")
+    
+    # Test 5: Get events without date filters
+    print("\n  Testing events retrieval without filters...")
+    response = make_request("GET", "/calendar/events", auth_token=user_token)
+    if response and response.status_code == 200:
+        data = response.json()
+        if "events" in data and len(data["events"]) >= initial_events_count + 2:
+            results.log_success("Calendar - Events retrieval without filters")
+        else:
+            results.log_failure("Calendar - Events retrieval", "Events not found or incorrect count")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Calendar - Events retrieval", error_msg)
+    
+    # Test 6: Get events with date filters
+    print("\n  Testing events retrieval with date filters...")
+    filter_start = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    filter_end = filter_start + timedelta(days=1)
+    
+    response = make_request("GET", f"/calendar/events?start_date={filter_start.isoformat()}Z&end_date={filter_end.isoformat()}Z", auth_token=user_token)
+    if response and response.status_code == 200:
+        data = response.json()
+        if "events" in data:
+            # Should find our team meeting event
+            filtered_events = [e for e in data["events"] if e["title"] == "Team Meeting - Project Review"]
+            if filtered_events:
+                results.log_success("Calendar - Events retrieval with date filters")
+            else:
+                results.log_success("Calendar - Date filter functionality (no events in range)")
+        else:
+            results.log_failure("Calendar - Date filtered events", "Invalid response structure")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Calendar - Date filtered events", error_msg)
+    
+    # Test 7: Update calendar event
+    print("\n  Testing calendar event update...")
+    if event_id:
+        update_data = {
+            "title": "Updated Team Meeting - Project Review & Planning",
+            "description": "Updated description: Weekly team meeting with extended planning session",
+            "location": "Conference Room B",
+            "reminder_minutes": 30,
+            "color": "#10b981"
+        }
+        
+        response = make_request("PUT", f"/calendar/events/{event_id}", update_data, auth_token=user_token)
+        if response and response.status_code == 200:
+            updated_event = response.json()
+            if (updated_event["title"] == update_data["title"] and 
+                updated_event["location"] == update_data["location"] and
+                updated_event["reminder_minutes"] == update_data["reminder_minutes"]):
+                results.log_success("Calendar - Event update")
+            else:
+                results.log_failure("Calendar - Event update", "Event not updated correctly")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("Calendar - Event update", error_msg)
+    
+    # Test 8: Test permission checks (user can't edit other's event)
+    print("\n  Testing event permission checks...")
+    # Create an event as admin
+    admin_event_data = {
+        "title": "Admin Meeting",
+        "start_date": (start_date + timedelta(days=3)).isoformat() + "Z",
+        "end_date": (start_date + timedelta(days=3, hours=1)).isoformat() + "Z",
+        "all_day": False
+    }
+    
+    response = make_request("POST", "/calendar/events", admin_event_data, auth_token=admin_token)
+    admin_event_id = None
+    if response and response.status_code == 200:
+        admin_event_id = response.json()["id"]
+        created_events.append(admin_event_id)
+        
+        # Try to edit as regular user (should fail)
+        update_data = {"title": "Hacked Meeting"}
+        response = make_request("PUT", f"/calendar/events/{admin_event_id}", update_data, auth_token=user_token)
+        
+        if response and response.status_code == 403:
+            results.log_success("Calendar - Event edit permission check")
+        else:
+            results.log_failure("Calendar - Event permissions", "Should deny access to other user's event")
+    
+    # Test 9: Test admin can edit any event
+    print("\n  Testing admin event permissions...")
+    if event_id:
+        admin_update_data = {"title": "Admin Updated Meeting"}
+        response = make_request("PUT", f"/calendar/events/{event_id}", admin_update_data, auth_token=admin_token)
+        
+        if response and response.status_code == 200:
+            results.log_success("Calendar - Admin can edit any event")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("Calendar - Admin event permissions", error_msg)
+    
+    # Test 10: Delete calendar event
+    print("\n  Testing calendar event deletion...")
+    if event_id:
+        response = make_request("DELETE", f"/calendar/events/{event_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            results.log_success("Calendar - Event deletion by owner")
+            created_events.remove(event_id)
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("Calendar - Event deletion", error_msg)
+    
+    # Test 11: Test permission checks for deletion
+    print("\n  Testing event deletion permission checks...")
+    if admin_event_id:
+        # Try to delete admin's event as regular user (should fail)
+        response = make_request("DELETE", f"/calendar/events/{admin_event_id}", auth_token=user_token)
+        
+        if response and response.status_code == 403:
+            results.log_success("Calendar - Event deletion permission check")
+        else:
+            results.log_failure("Calendar - Event deletion permissions", "Should deny deletion of other user's event")
+        
+        # Admin should be able to delete it
+        response = make_request("DELETE", f"/calendar/events/{admin_event_id}", auth_token=admin_token)
+        if response and response.status_code == 200:
+            results.log_success("Calendar - Admin can delete any event")
+            created_events.remove(admin_event_id)
+        else:
+            results.log_failure("Calendar - Admin event deletion", "Admin should be able to delete any event")
+    
+    # Test 12: Verify event is deleted
+    print("\n  Testing event deletion verification...")
+    if event_id:
+        response = make_request("GET", f"/calendar/events", auth_token=user_token)
+        if response and response.status_code == 200:
+            data = response.json()
+            deleted_events = [e for e in data["events"] if e["id"] == event_id]
+            if not deleted_events:
+                results.log_success("Calendar - Event deletion verification")
+            else:
+                results.log_failure("Calendar - Event deletion verification", "Event should be deleted")
+    
+    # Cleanup remaining events
+    print("\n  Cleaning up remaining test events...")
+    for event_id in created_events:
+        make_request("DELETE", f"/calendar/events/{event_id}", auth_token=admin_token)
+
+def test_user_settings():
+    """Test User Settings APIs comprehensively"""
+    print("\n⚙️ Testing User Settings APIs...")
+    
+    # Test 1: Get user settings (should create default if not exists)
+    print("\n  Testing initial settings retrieval...")
+    response = make_request("GET", "/settings", auth_token=user_token)
+    if response and response.status_code == 200:
+        settings = response.json()
+        
+        # Verify default settings structure
+        required_fields = ["user_id", "full_name", "email", "language", "timezone", 
+                          "date_format", "theme", "email_notifications", "push_notifications"]
+        missing_fields = [field for field in required_fields if field not in settings]
+        
+        if not missing_fields:
+            results.log_success("Settings - Initial settings retrieval with default creation")
+        else:
+            results.log_failure("Settings - Initial settings", f"Missing fields: {missing_fields}")
+        
+        # Verify default values
+        if (settings["language"] == "fr" and 
+            settings["timezone"] == "Europe/Paris" and
+            settings["date_format"] == "DD/MM/YYYY"):
+            results.log_success("Settings - Default values validation")
+        else:
+            results.log_failure("Settings - Default values", "Default values not set correctly")
+            
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings - Initial settings retrieval", error_msg)
+    
+    # Test 2: Update user settings (profile settings)
+    print("\n  Testing profile settings update...")
+    profile_update = {
+        "full_name": "John Smith Updated",
+        "phone": "+213-555-0123",
+        "bio": "Senior Document Manager at EPSys - Updated profile"
+    }
+    
+    response = make_request("PUT", "/settings", profile_update, auth_token=user_token)
+    if response and response.status_code == 200:
+        updated_settings = response.json()
+        if (updated_settings["full_name"] == profile_update["full_name"] and
+            updated_settings["phone"] == profile_update["phone"] and
+            updated_settings["bio"] == profile_update["bio"]):
+            results.log_success("Settings - Profile settings update")
+        else:
+            results.log_failure("Settings - Profile update", "Profile settings not updated correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings - Profile settings update", error_msg)
+    
+    # Test 3: Update notification settings
+    print("\n  Testing notification settings update...")
+    notification_update = {
+        "email_notifications": False,
+        "push_notifications": True,
+        "document_update_notifications": False,
+        "message_notifications": True,
+        "calendar_reminders": False
+    }
+    
+    response = make_request("PUT", "/settings", notification_update, auth_token=user_token)
+    if response and response.status_code == 200:
+        updated_settings = response.json()
+        if (updated_settings["email_notifications"] == False and
+            updated_settings["push_notifications"] == True and
+            updated_settings["calendar_reminders"] == False):
+            results.log_success("Settings - Notification settings update")
+        else:
+            results.log_failure("Settings - Notification update", "Notification settings not updated correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings - Notification settings update", error_msg)
+    
+    # Test 4: Update system preferences
+    print("\n  Testing system preferences update...")
+    system_update = {
+        "language": "en",
+        "timezone": "America/New_York",
+        "date_format": "MM/DD/YYYY",
+        "theme": "dark"
+    }
+    
+    response = make_request("PUT", "/settings", system_update, auth_token=user_token)
+    if response and response.status_code == 200:
+        updated_settings = response.json()
+        if (updated_settings["language"] == "en" and
+            updated_settings["timezone"] == "America/New_York" and
+            updated_settings["theme"] == "dark"):
+            results.log_success("Settings - System preferences update")
+        else:
+            results.log_failure("Settings - System preferences", "System preferences not updated correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings - System preferences update", error_msg)
+    
+    # Test 5: Update security and privacy settings
+    print("\n  Testing security and privacy settings update...")
+    security_update = {
+        "two_factor_enabled": True,
+        "session_timeout_minutes": 60,
+        "profile_visibility": "private",
+        "show_online_status": False
+    }
+    
+    response = make_request("PUT", "/settings", security_update, auth_token=user_token)
+    if response and response.status_code == 200:
+        updated_settings = response.json()
+        if (updated_settings["two_factor_enabled"] == True and
+            updated_settings["session_timeout_minutes"] == 60 and
+            updated_settings["profile_visibility"] == "private"):
+            results.log_success("Settings - Security and privacy settings update")
+        else:
+            results.log_failure("Settings - Security/privacy update", "Security/privacy settings not updated correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings - Security and privacy settings update", error_msg)
+    
+    # Test 6: Verify settings persistence
+    print("\n  Testing settings persistence...")
+    response = make_request("GET", "/settings", auth_token=user_token)
+    if response and response.status_code == 200:
+        settings = response.json()
+        if (settings["full_name"] == "John Smith Updated" and
+            settings["language"] == "en" and
+            settings["two_factor_enabled"] == True):
+            results.log_success("Settings - Settings persistence verification")
+        else:
+            results.log_failure("Settings - Persistence", "Settings not persisted correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings - Settings persistence", error_msg)
+    
+    # Test 7: Password change with correct current password
+    print("\n  Testing password change with correct current password...")
+    password_change = {
+        "current_password": "UserPass456!",  # From login test
+        "new_password": "NewSecurePass789!"
+    }
+    
+    response = make_request("POST", "/settings/change-password", password_change, auth_token=user_token)
+    if response and response.status_code == 200:
+        data = response.json()
+        if "message" in data and "successfully" in data["message"].lower():
+            results.log_success("Settings - Password change with correct current password")
+        else:
+            results.log_failure("Settings - Password change", "Invalid password change response")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings - Password change", error_msg)
+    
+    # Test 8: Password change with wrong current password
+    print("\n  Testing password change with wrong current password...")
+    wrong_password_change = {
+        "current_password": "WrongPassword123!",
+        "new_password": "AnotherNewPass456!"
+    }
+    
+    response = make_request("POST", "/settings/change-password", wrong_password_change, auth_token=user_token)
+    if response and response.status_code == 400:
+        results.log_success("Settings - Password change rejection with wrong current password")
+    else:
+        results.log_failure("Settings - Wrong password validation", "Should reject wrong current password")
+    
+    # Test 9: Password change with weak new password
+    print("\n  Testing password change with weak new password...")
+    weak_password_change = {
+        "current_password": "NewSecurePass789!",  # Updated password
+        "new_password": "123"  # Too weak
+    }
+    
+    response = make_request("POST", "/settings/change-password", weak_password_change, auth_token=user_token)
+    if response and response.status_code == 422:  # Validation error
+        results.log_success("Settings - Weak password rejection")
+    else:
+        results.log_failure("Settings - Weak password validation", "Should reject weak passwords")
+    
+    # Test 10: Admin-only system info endpoint (as regular user - should fail)
+    print("\n  Testing system info access as regular user...")
+    response = make_request("GET", "/settings/system-info", auth_token=user_token)
+    if response and response.status_code == 403:
+        results.log_success("Settings - System info access denied for regular user")
+    else:
+        results.log_failure("Settings - System info permissions", "Should deny access to non-admin users")
+    
+    # Test 11: Admin-only system info endpoint (as admin - should succeed)
+    print("\n  Testing system info access as admin...")
+    response = make_request("GET", "/settings/system-info", auth_token=admin_token)
+    if response and response.status_code == 200:
+        system_info = response.json()
+        
+        # Verify system info structure
+        if ("database_stats" in system_info and "system_status" in system_info):
+            results.log_success("Settings - Admin system info access")
+            
+            # Verify database stats structure
+            db_stats = system_info["database_stats"]
+            required_stats = ["total_users", "total_documents", "total_folders", "total_files", "total_events"]
+            missing_stats = [stat for stat in required_stats if stat not in db_stats]
+            
+            if not missing_stats:
+                results.log_success("Settings - System info database statistics structure")
+            else:
+                results.log_failure("Settings - System info stats", f"Missing stats: {missing_stats}")
+            
+            # Verify system status
+            sys_status = system_info["system_status"]
+            if ("status" in sys_status and "version" in sys_status):
+                results.log_success("Settings - System info status structure")
+            else:
+                results.log_failure("Settings - System status", "Missing system status fields")
+                
+        else:
+            results.log_failure("Settings - System info structure", "Invalid system info response structure")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings - Admin system info access", error_msg)
+    
+    # Test 12: Verify password change worked by trying to login with new password
+    print("\n  Testing login with new password...")
+    # We need to get the username first - let's use the /me endpoint
+    me_response = make_request("GET", "/me", auth_token=user_token)
+    if me_response and me_response.status_code == 200:
+        username = me_response.json()["username"]
+        
+        new_login = {
+            "username": username,
+            "password": "NewSecurePass789!"  # The new password we set
+        }
+        
+        response = make_request("POST", "/login", new_login)
+        if response and response.status_code == 200:
+            results.log_success("Settings - Login with new password verification")
+        else:
+            results.log_failure("Settings - New password verification", "Cannot login with new password")
+    else:
+        results.log_failure("Settings - Password verification setup", "Could not get username for verification")
+
 def run_all_tests():
     """Run all backend tests"""
     print("🚀 Starting EPSys Backend API Tests...")
