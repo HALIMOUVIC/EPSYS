@@ -45,7 +45,16 @@ const Settings = () => {
     if (user?.role === 'admin') {
       fetchSystemInfo();
     }
-  }, [user]);
+    
+    // Update remaining time every 10 seconds
+    const interval = setInterval(() => {
+      if (getRemainingTime) {
+        setRemainingTime(getRemainingTime());
+      }
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  }, [user, getRemainingTime]);
 
   const showAlert = (type, title, message) => {
     setAlert({ type, title, message });
