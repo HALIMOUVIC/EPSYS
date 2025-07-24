@@ -41,14 +41,11 @@ const FileManager = () => {
   const fetchFolderContents = async (folderId) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('authToken');
       const url = folderId 
         ? `${backendUrl}/api/file-manager/folders?parent_id=${folderId}`
         : `${backendUrl}/api/file-manager/folders`;
       
-      const response = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(url);
       
       setFolders(response.data.folders || []);
       setFiles(response.data.files || []);
@@ -69,10 +66,7 @@ const FileManager = () => {
     }
 
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await axios.get(`${backendUrl}/api/file-manager/search?query=${encodeURIComponent(searchTerm)}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${backendUrl}/api/file-manager/search?query=${encodeURIComponent(searchTerm)}`);
       
       setSearchResults(response.data);
     } catch (error) {
@@ -85,12 +79,9 @@ const FileManager = () => {
     if (!folderName.trim()) return;
 
     try {
-      const token = localStorage.getItem('authToken');
       const response = await axios.post(`${backendUrl}/api/file-manager/folders`, {
         name: folderName,
         parent_id: currentFolder
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
 
       setFolders([...folders, response.data]);
@@ -107,11 +98,8 @@ const FileManager = () => {
     if (!folderName.trim() || !editingFolder) return;
 
     try {
-      const token = localStorage.getItem('authToken');
       const response = await axios.put(`${backendUrl}/api/file-manager/folders/${editingFolder.id}`, {
         name: folderName
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
 
       setFolders(folders.map(f => f.id === editingFolder.id ? response.data : f));
@@ -129,10 +117,7 @@ const FileManager = () => {
     if (!window.confirm(`Êtes-vous sûr de vouloir supprimer le dossier "${folder.name}" et tout son contenu ?`)) return;
 
     try {
-      const token = localStorage.getItem('authToken');
-      await axios.delete(`${backendUrl}/api/file-manager/folders/${folder.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`${backendUrl}/api/file-manager/folders/${folder.id}`);
 
       setFolders(folders.filter(f => f.id !== folder.id));
     } catch (error) {
@@ -148,7 +133,6 @@ const FileManager = () => {
 
     setUploadingFile(true);
     try {
-      const token = localStorage.getItem('authToken');
       const formData = new FormData();
       
       selectedFiles.forEach(file => {
@@ -161,8 +145,7 @@ const FileManager = () => {
       
       const response = await axios.post(`${backendUrl}/api/file-manager/upload`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'multipart/form-data'
         }
       });
 
@@ -183,10 +166,7 @@ const FileManager = () => {
     if (!window.confirm(`Êtes-vous sûr de vouloir supprimer le fichier "${file.name}" ?`)) return;
 
     try {
-      const token = localStorage.getItem('authToken');
-      await axios.delete(`${backendUrl}/api/file-manager/files/${file.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`${backendUrl}/api/file-manager/files/${file.id}`);
 
       setFiles(files.filter(f => f.id !== file.id));
     } catch (error) {
