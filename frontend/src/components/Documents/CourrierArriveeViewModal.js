@@ -206,6 +206,14 @@ const CourrierArriveeViewModal = ({ document, isOpen, onClose }) => {
 
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <div className="flex items-center space-x-2 mb-2">
+                      <BuildingOfficeIcon className="w-5 h-5 text-teal-600" />
+                      <label className="text-sm font-semibold text-gray-700">Destinataire</label>
+                    </div>
+                    <p className="text-gray-900">{document.metadata?.destinataire || '-'}</p>
+                  </div>
+
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-2">
                       <DocumentTextIcon className="w-5 h-5 text-indigo-600" />
                       <label className="text-sm font-semibold text-gray-700">Objet</label>
                     </div>
