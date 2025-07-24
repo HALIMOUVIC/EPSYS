@@ -127,12 +127,7 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <MainLayout>
-                <DocumentList
-                  documentType="om_approval"
-                  title="OM Approval"
-                  icon={DocumentCheckIcon}
-                  color="text-purple-600"
-                />
+                <OMApprovalList />
               </MainLayout>
             </ProtectedRoute>
           }
