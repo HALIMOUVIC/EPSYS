@@ -1022,6 +1022,342 @@ def test_document_deletion():
     else:
         results.log_failure("Document deletion verification", "Document should be deleted")
 
+def test_enhanced_file_manager():
+    """Test Enhanced File Manager Backend APIs comprehensively"""
+    print("\n📁 Testing Enhanced File Manager Backend APIs...")
+    
+    # Global variables to track created items for cleanup
+    created_folders = []
+    created_files = []
+    
+    # Test 1: Get initial folders (should be empty)
+    print("\n  Testing initial folder listing...")
+    response = make_request("GET", "/file-manager/folders", auth_token=user_token)
+    if response and response.status_code == 200:
+        data = response.json()
+        if isinstance(data, dict) and "folders" in data and "files" in data:
+            results.log_success("File Manager - Initial folder listing structure")
+            
+            # Should be empty initially
+            if len(data["folders"]) == 0 and len(data["files"]) == 0:
+                results.log_success("File Manager - Initial empty state")
+            else:
+                results.log_success("File Manager - Initial state (may have existing content)")
+        else:
+            results.log_failure("File Manager - Initial folder listing", "Invalid response structure")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("File Manager - Initial folder listing", error_msg)
+    
+    # Test 2: Create root folder with user tracking
+    print("\n  Testing folder creation...")
+    folder_data = {
+        "name": "Project Documents",
+        "parent_id": None
+    }
+    
+    response = make_request("POST", "/file-manager/folders", folder_data, auth_token=user_token)
+    root_folder_id = None
+    if response and response.status_code == 200:
+        folder = response.json()
+        root_folder_id = folder["id"]
+        created_folders.append(root_folder_id)
+        
+        # Verify folder structure
+        if (folder["name"] == folder_data["name"] and 
+            folder["parent_id"] is None and
+            folder["created_by"] == user_user_id):
+            results.log_success("File Manager - Root folder creation with user tracking")
+        else:
+            results.log_failure("File Manager - Root folder creation", "Invalid folder data returned")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("File Manager - Root folder creation", error_msg)
+    
+    # Test 3: Create subfolder
+    print("\n  Testing subfolder creation...")
+    if root_folder_id:
+        subfolder_data = {
+            "name": "Reports",
+            "parent_id": root_folder_id
+        }
+        
+        response = make_request("POST", "/file-manager/folders", subfolder_data, auth_token=user_token)
+        subfolder_id = None
+        if response and response.status_code == 200:
+            folder = response.json()
+            subfolder_id = folder["id"]
+            created_folders.append(subfolder_id)
+            
+            # Verify hierarchical structure
+            if (folder["name"] == subfolder_data["name"] and 
+                folder["parent_id"] == root_folder_id and
+                folder["path"] == "/Project Documents/Reports"):
+                results.log_success("File Manager - Subfolder creation with path management")
+            else:
+                results.log_failure("File Manager - Subfolder creation", f"Invalid path or structure: {folder}")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("File Manager - Subfolder creation", error_msg)
+    
+    # Test 4: Test duplicate folder name prevention
+    print("\n  Testing duplicate folder prevention...")
+    if root_folder_id:
+        duplicate_folder_data = {
+            "name": "Reports",  # Same name as subfolder
+            "parent_id": root_folder_id
+        }
+        
+        response = make_request("POST", "/file-manager/folders", duplicate_folder_data, auth_token=user_token)
+        if response and response.status_code == 400:
+            results.log_success("File Manager - Duplicate folder name prevention")
+        else:
+            results.log_failure("File Manager - Duplicate folder prevention", "Should prevent duplicate folder names")
+    
+    # Test 5: Upload files to folder with user attribution
+    print("\n  Testing file upload to folder...")
+    if root_folder_id:
+        # Create test files
+        test_content1 = b"This is a test document for file manager testing - Document 1"
+        test_content2 = b"This is another test document for file manager testing - Document 2"
+        
+        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as temp_file1:
+            temp_file1.write(test_content1)
+            temp_file1_path = temp_file1.name
+        
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file2:
+            temp_file2.write(test_content2)
+            temp_file2_path = temp_file2.name
+        
+        try:
+            with open(temp_file1_path, 'rb') as f1, open(temp_file2_path, 'rb') as f2:
+                files = [
+                    ('files', ('test_document1.txt', f1, 'text/plain')),
+                    ('files', ('test_document2.pdf', f2, 'application/pdf'))
+                ]
+                data = {'folder_id': root_folder_id}
+                
+                response = make_request("POST", "/file-manager/upload", data=data, files=files, auth_token=user_token)
+            
+            if response and response.status_code == 200:
+                upload_result = response.json()
+                if "files" in upload_result and len(upload_result["files"]) == 2:
+                    results.log_success("File Manager - Multiple file upload to folder")
+                    
+                    # Store file IDs for cleanup
+                    for file_info in upload_result["files"]:
+                        created_files.append(file_info["id"])
+                    
+                    # Verify user attribution
+                    first_file = upload_result["files"][0]
+                    if (first_file["created_by"] == user_user_id and 
+                        first_file["uploaded_by_name"] == "Login User"):  # From login test
+                        results.log_success("File Manager - File upload with user attribution")
+                    else:
+                        results.log_failure("File Manager - File upload attribution", "User attribution not working correctly")
+                else:
+                    results.log_failure("File Manager - File upload", "Invalid upload response")
+            else:
+                error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+                results.log_failure("File Manager - File upload", error_msg)
+        
+        finally:
+            os.unlink(temp_file1_path)
+            os.unlink(temp_file2_path)
+    
+    # Test 6: Upload files to root (no folder)
+    print("\n  Testing file upload to root...")
+    test_content3 = b"This is a root level test document"
+    
+    with tempfile.NamedTemporaryFile(suffix=".doc", delete=False) as temp_file3:
+        temp_file3.write(test_content3)
+        temp_file3_path = temp_file3.name
+    
+    try:
+        with open(temp_file3_path, 'rb') as f3:
+            files = [('files', ('root_document.doc', f3, 'application/msword'))]
+            
+            response = make_request("POST", "/file-manager/upload", files=files, auth_token=user_token)
+        
+        if response and response.status_code == 200:
+            upload_result = response.json()
+            if "files" in upload_result and len(upload_result["files"]) == 1:
+                results.log_success("File Manager - File upload to root")
+                created_files.append(upload_result["files"][0]["id"])
+            else:
+                results.log_failure("File Manager - Root file upload", "Invalid upload response")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("File Manager - Root file upload", error_msg)
+    
+    finally:
+        os.unlink(temp_file3_path)
+    
+    # Test 7: Get folders with files (verify structure)
+    print("\n  Testing folder listing with files...")
+    response = make_request("GET", f"/file-manager/folders?parent_id={root_folder_id}", auth_token=user_token)
+    if response and response.status_code == 200:
+        data = response.json()
+        if ("folders" in data and "files" in data and 
+            len(data["files"]) >= 2):  # Should have the uploaded files
+            results.log_success("File Manager - Folder listing with files")
+            
+            # Verify file structure
+            first_file = data["files"][0]
+            required_file_fields = ["id", "name", "original_name", "file_size", "mime_type", 
+                                  "created_by", "uploaded_by_name", "created_at"]
+            missing_fields = [field for field in required_file_fields if field not in first_file]
+            
+            if not missing_fields:
+                results.log_success("File Manager - File metadata structure")
+            else:
+                results.log_failure("File Manager - File metadata", f"Missing fields: {missing_fields}")
+        else:
+            results.log_failure("File Manager - Folder with files", "Files not found in folder")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("File Manager - Folder with files", error_msg)
+    
+    # Test 8: Edit folder name with permission checks
+    print("\n  Testing folder name editing...")
+    if root_folder_id:
+        update_data = {
+            "name": "Updated Project Documents"
+        }
+        
+        response = make_request("PUT", f"/file-manager/folders/{root_folder_id}", update_data, auth_token=user_token)
+        if response and response.status_code == 200:
+            folder = response.json()
+            if (folder["name"] == update_data["name"] and 
+                folder["path"] == "/Updated Project Documents"):
+                results.log_success("File Manager - Folder name update with path management")
+            else:
+                results.log_failure("File Manager - Folder update", "Name or path not updated correctly")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("File Manager - Folder update", error_msg)
+    
+    # Test 9: Test permission checks (user can't edit admin's folder)
+    print("\n  Testing folder permission checks...")
+    # Create a folder as admin
+    admin_folder_data = {
+        "name": "Admin Only Folder",
+        "parent_id": None
+    }
+    
+    response = make_request("POST", "/file-manager/folders", admin_folder_data, auth_token=admin_token)
+    admin_folder_id = None
+    if response and response.status_code == 200:
+        admin_folder_id = response.json()["id"]
+        created_folders.append(admin_folder_id)
+        
+        # Try to edit as regular user (should fail)
+        update_data = {"name": "Hacked Folder"}
+        response = make_request("PUT", f"/file-manager/folders/{admin_folder_id}", update_data, auth_token=user_token)
+        
+        if response and response.status_code == 403:
+            results.log_success("File Manager - Folder edit permission check")
+        else:
+            results.log_failure("File Manager - Folder permissions", "Should deny access to other user's folder")
+    
+    # Test 10: Search functionality
+    print("\n  Testing search functionality...")
+    search_query = "Project"
+    response = make_request("GET", f"/file-manager/search?query={search_query}", auth_token=user_token)
+    if response and response.status_code == 200:
+        search_results = response.json()
+        if "folders" in search_results and "files" in search_results:
+            results.log_success("File Manager - Search functionality structure")
+            
+            # Should find our updated folder
+            found_folders = [f for f in search_results["folders"] if "Project" in f["name"]]
+            if found_folders:
+                results.log_success("File Manager - Search finds folders by name")
+            else:
+                results.log_failure("File Manager - Search folders", "Search didn't find expected folder")
+        else:
+            results.log_failure("File Manager - Search functionality", "Invalid search response structure")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("File Manager - Search functionality", error_msg)
+    
+    # Test 11: File download functionality
+    print("\n  Testing file download...")
+    if created_files:
+        file_id = created_files[0]
+        response = make_request("GET", f"/file-manager/download/{file_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            # Check if it's a file download response
+            if response.headers.get('content-disposition'):
+                results.log_success("File Manager - File download")
+            else:
+                results.log_success("File Manager - File download (content returned)")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("File Manager - File download", error_msg)
+    
+    # Test 12: File deletion with permission checks
+    print("\n  Testing file deletion...")
+    if created_files:
+        file_id = created_files[0]
+        response = make_request("DELETE", f"/file-manager/files/{file_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            results.log_success("File Manager - File deletion by owner")
+            created_files.remove(file_id)
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("File Manager - File deletion", error_msg)
+    
+    # Test 13: Test admin can delete any file
+    print("\n  Testing admin file deletion permissions...")
+    if created_files:
+        file_id = created_files[0]
+        response = make_request("DELETE", f"/file-manager/files/{file_id}", auth_token=admin_token)
+        if response and response.status_code == 200:
+            results.log_success("File Manager - Admin can delete any file")
+            created_files.remove(file_id)
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("File Manager - Admin file deletion", error_msg)
+    
+    # Test 14: Recursive folder deletion
+    print("\n  Testing recursive folder deletion...")
+    if root_folder_id:
+        response = make_request("DELETE", f"/file-manager/folders/{root_folder_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            results.log_success("File Manager - Recursive folder deletion")
+            # Remove from cleanup list since it's deleted
+            if root_folder_id in created_folders:
+                created_folders.remove(root_folder_id)
+            # Subfolders should also be deleted
+            if subfolder_id in created_folders:
+                created_folders.remove(subfolder_id)
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("File Manager - Recursive folder deletion", error_msg)
+    
+    # Test 15: Verify folder and files are deleted
+    print("\n  Testing deletion verification...")
+    if root_folder_id:
+        response = make_request("GET", f"/file-manager/folders?parent_id={root_folder_id}", auth_token=user_token)
+        # Should return empty or 404, but let's check the main folder list
+        response = make_request("GET", "/file-manager/folders", auth_token=user_token)
+        if response and response.status_code == 200:
+            data = response.json()
+            remaining_folders = [f for f in data["folders"] if f["id"] == root_folder_id]
+            if not remaining_folders:
+                results.log_success("File Manager - Folder deletion verification")
+            else:
+                results.log_failure("File Manager - Deletion verification", "Folder still exists after deletion")
+    
+    # Cleanup remaining items
+    print("\n  Cleaning up remaining test items...")
+    for folder_id in created_folders:
+        make_request("DELETE", f"/file-manager/folders/{folder_id}", auth_token=admin_token)
+    
+    for file_id in created_files:
+        make_request("DELETE", f"/file-manager/files/{file_id}", auth_token=admin_token)
+
 def run_all_tests():
     """Run all backend tests"""
     print("🚀 Starting EPSys Backend API Tests...")
@@ -1043,6 +1379,9 @@ def run_all_tests():
         
         # DRI Depart specific tests
         test_dri_depart_functionality()
+        
+        # Enhanced File Manager tests
+        test_enhanced_file_manager()
         
         # Role-based access tests
         test_role_based_access()
