@@ -88,13 +88,25 @@ const CourrierArriveeViewModal = ({ document, isOpen, onClose }) => {
 
   const handlePreview = async (file) => {
     try {
-      console.log('Attempting to preview file:', file.original_name);
-      console.log('File path:', file.file_path);
+      console.log('Attempting to preview file:', file.original_name || file.name);
+      
+      let filePath;
+      if (file.file_path) {
+        filePath = file.file_path;
+      } else if (document.file_path) {
+        filePath = document.file_path;
+      } else {
+        console.error('No file path available');
+        alert('Chemin de fichier non disponible');
+        return;
+      }
+      
+      console.log('File path:', filePath);
       
       // Extract relative path from absolute path if needed
-      let relativePath = file.file_path;
-      if (file.file_path.includes('/uploads/')) {
-        relativePath = file.file_path.split('/uploads/')[1];
+      let relativePath = filePath;
+      if (filePath.includes('/uploads/')) {
+        relativePath = filePath.split('/uploads/')[1];
       }
       
       console.log('Using relative path for preview:', relativePath);
@@ -112,9 +124,9 @@ const CourrierArriveeViewModal = ({ document, isOpen, onClose }) => {
       console.log('Blob type:', blob.type);
       
       setPreviewFile({
-        name: file.original_name,
+        name: file.original_name || file.name || document.file_name,
         url: url,
-        type: blob.type || getContentType(file.original_name)
+        type: blob.type || getContentType(file.original_name || file.name || document.file_name)
       });
       
       console.log('Preview file state set successfully');
