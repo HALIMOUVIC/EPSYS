@@ -56,6 +56,11 @@ const Settings = () => {
       setLoading(true);
       const response = await axios.get(`${backendUrl}/api/settings`);
       setSettings(response.data);
+      
+      // Sync language with user settings
+      if (response.data.language) {
+        syncWithUserSettings(response.data.language);
+      }
     } catch (error) {
       console.error('Failed to fetch settings:', error);
       showAlert('error', 'Erreur', 'Impossible de charger les paramètres');
