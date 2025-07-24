@@ -360,9 +360,9 @@ const Settings = () => {
 
           <div className="space-y-4">
             <div>
-              <label className="block font-medium text-gray-900 mb-2">Langue</label>
+              <label className="block font-medium text-gray-900 mb-2">{t('language')}</label>
               <select
-                value={settings.language}
+                value={currentLanguage}
                 onChange={(e) => handleInputChange('language', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
