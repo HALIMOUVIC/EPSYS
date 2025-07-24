@@ -147,17 +147,21 @@ export const AuthProvider = ({ children }) => {
       clearInterval(sessionTimerRef.current);
     }
     
-    // Check session expiry every 10 seconds for more responsive logout
+    console.log(`Starting session timer with timeout: ${sessionTimeout} minutes`);
+    
+    // Check session expiry every 5 seconds for very responsive logout
     sessionTimerRef.current = setInterval(() => {
       if (user && sessionTimeout > 0) {
         const now = Date.now();
         const timeoutMs = sessionTimeout * 60 * 1000; // Convert minutes to milliseconds
         const timeSinceLastActivity = now - lastActivityRef.current;
+        const remainingMs = timeoutMs - timeSinceLastActivity;
+        const remainingMinutes = Math.ceil(remainingMs / (60 * 1000));
 
-        console.log(`Session check: ${Math.floor(timeSinceLastActivity / 1000)}s since last activity, timeout: ${sessionTimeout}min`);
+        console.log(`🔍 Session check: ${Math.floor(timeSinceLastActivity / 1000)}s since last activity, timeout: ${sessionTimeout}min, remaining: ${remainingMinutes}min`);
 
         if (timeSinceLastActivity >= timeoutMs) {
-          console.log(`Session expired after ${sessionTimeout} minutes of inactivity - TRIGGERING LOGOUT`);
+          console.log(`🚨 SESSION EXPIRED! ${sessionTimeout} minutes of inactivity reached - TRIGGERING LOGOUT NOW`);
           
           // Clear the timer before logout to prevent multiple calls
           if (sessionTimerRef.current) {
@@ -168,8 +172,10 @@ export const AuthProvider = ({ children }) => {
           // Perform logout immediately
           handleSessionExpiry();
         }
+      } else {
+        console.log(`⏸️ Session timer paused - user: ${!!user}, timeout: ${sessionTimeout}`);
       }
-    }, 10000); // Check every 10 seconds instead of 30
+    }, 5000); // Check every 5 seconds for faster response
   };
 
   const handleSessionExpiry = () => {
