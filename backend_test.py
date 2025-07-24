@@ -3477,11 +3477,11 @@ def test_profile_settings_integration():
         results.log_failure("Profile - Admin profile settings", error_msg)
 
 def main():
-    """Run all backend tests with focus on PRIMARY TEST AREAS"""
+    """Run all backend tests with focus on Documents Download Endpoint"""
     print("🚀 Starting EPSys Backend API Tests...")
     print(f"Backend URL: {BACKEND_URL}")
     print("="*60)
-    print("🎯 PRIMARY TEST FOCUS: Settings System Preferences, Signup Toggle, Profile Settings")
+    print("🎯 PRIMARY TEST FOCUS: Documents Download Endpoint")
     print("="*60)
     
     try:
@@ -3489,22 +3489,20 @@ def main():
         test_user_registration()
         test_user_login()
         
-        # PRIMARY TEST FOCUS - The three main areas from review request
+        # PRIMARY TEST FOCUS - Documents Download Endpoint
         print("\n" + "="*60)
-        print("🎯 STARTING PRIMARY TEST FOCUS AREAS")
+        print("🎯 STARTING PRIMARY TEST FOCUS: DOCUMENTS DOWNLOAD ENDPOINT")
         print("="*60)
         
-        test_settings_system_preferences()
-        test_signup_toggle_functionality()
-        test_profile_settings_integration()
+        test_documents_download_endpoint()
         
         print("\n" + "="*60)
         print("✅ PRIMARY TEST FOCUS COMPLETED")
         print("="*60)
         
-        # Additional verification tests
+        # Additional verification tests if needed
         test_protected_endpoints()
-        test_dashboard_statistics()
+        test_dri_depart_functionality()
         
     except KeyboardInterrupt:
         print("\n\n⚠️ Tests interrupted by user")
