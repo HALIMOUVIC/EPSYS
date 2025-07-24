@@ -49,6 +49,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sessionTimeout, setSessionTimeout] = useState(30); // Default 30 minutes
+  const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
   
   // Use useRef to avoid re-renders when updating last activity
   const lastActivityRef = useRef(Date.now());
