@@ -170,11 +170,11 @@ class Folder(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class FolderCreate(BaseModel):
-    name: str
+    name: str = Field(..., min_length=1, max_length=255)
     parent_id: Optional[str] = None
 
 class FolderUpdate(BaseModel):
-    name: str
+    name: str = Field(..., min_length=1, max_length=255)
 
 class FileItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
