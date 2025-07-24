@@ -240,10 +240,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    console.log('Manual logout called');
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     setUser(null);
     lastActivityRef.current = Date.now();
+    
+    // Redirect to login
+    window.location.href = '/login';
   };
 
   const value = {
