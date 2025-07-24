@@ -770,6 +770,9 @@ def run_all_tests():
         test_file_upload()
         test_document_permissions()
         
+        # OM Approval specific tests
+        test_om_approval_functionality()
+        
         # Role-based access tests
         test_role_based_access()
         
