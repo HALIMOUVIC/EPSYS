@@ -213,7 +213,7 @@ def get_upload_folder(document_type: str) -> Path:
     folders = {
         'outgoing_mail': 'depart',
         'incoming_mail': 'arrive',
-        'dri_depart': 'dri_depart',
+        'dri_deport': 'dri_depart',
         'om_approval': 'om_approval',
         'file_manager': 'file_manager',
         'general': 'general'
