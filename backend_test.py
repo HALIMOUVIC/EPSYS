@@ -73,7 +73,10 @@ def make_request(method, endpoint, data=None, headers=None, files=None, auth_tok
             else:
                 response = requests.post(url, json=data, headers=request_headers, timeout=10)
         elif method == "PUT":
-            response = requests.put(url, json=data, headers=request_headers, timeout=10)
+            if files:
+                response = requests.put(url, files=files, headers=request_headers, timeout=10)
+            else:
+                response = requests.put(url, json=data, headers=request_headers, timeout=10)
         elif method == "DELETE":
             response = requests.delete(url, headers=request_headers, timeout=10)
         else:
