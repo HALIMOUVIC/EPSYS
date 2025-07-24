@@ -14,7 +14,7 @@ const OMApprovalForm = ({ onClose, onSave }) => {
   const { user } = useAuth();
   
   const [formData, setFormData] = useState({
-    fullName: user?.full_name || '',
+    fullName: '',
     matricule: '',
     date: new Date().toISOString().split('T')[0],
     jobTitle: '',
@@ -28,16 +28,15 @@ const OMApprovalForm = ({ onClose, onSave }) => {
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [employeeLoading, setEmployeeLoading] = useState(false);
 
-  useEffect(() => {
-    // Pre-fill user information
-    setFormData(prev => ({
-      ...prev,
-      fullName: user?.full_name || '',
-      // You might want to fetch additional user details like job title and division
-      // from user profile or a separate API endpoint
-    }));
-  }, [user]);
+  // Remove the useEffect that pre-fills user information
+  // useEffect(() => {
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     fullName: user?.full_name || '',
+  //   }));
+  // }, [user]);
 
   const handleChange = (e) => {
     setFormData({
