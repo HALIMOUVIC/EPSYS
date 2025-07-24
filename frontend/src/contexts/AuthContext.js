@@ -47,10 +47,80 @@ axios.interceptors.response.use(
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sessionTimeout, setSessionTimeout] = useState(30); // Default 30 minutes
+  const [lastActivity, setLastActivity] = useState(Date.now());
 
   useEffect(() => {
     checkAuthStatus();
+    loadSessionTimeout();
+    setupActivityTracking();
+    startSessionTimer();
   }, []);
+
+  useEffect(() => {
+    // Update session timeout when user changes
+    if (user) {
+      loadSessionTimeout();
+    }
+  }, [user]);
+
+  const loadSessionTimeout = async () => {
+    try {
+      if (user) {
+        const response = await axios.get('/settings');
+        const timeoutMinutes = response.data.session_timeout_minutes || 30;
+        setSessionTimeout(timeoutMinutes);
+      }
+    } catch (error) {
+      console.error('Failed to load session timeout:', error);
+    }
+  };
+
+  const setupActivityTracking = () => {
+    const updateActivity = () => {
+      setLastActivity(Date.now());
+    };
+
+    // Track various user activities
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    events.forEach(event => {
+      document.addEventListener(event, updateActivity, true);
+    });
+
+    // Cleanup function
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, updateActivity, true);
+      });
+    };
+  };
+
+  const startSessionTimer = () => {
+    const checkSessionExpiry = () => {
+      if (user && sessionTimeout > 0) {
+        const now = Date.now();
+        const timeoutMs = sessionTimeout * 60 * 1000; // Convert minutes to milliseconds
+        const timeSinceLastActivity = now - lastActivity;
+
+        if (timeSinceLastActivity >= timeoutMs) {
+          console.log(`Session expired after ${sessionTimeout} minutes of inactivity`);
+          logout();
+          alert(`Votre session a expiré après ${sessionTimeout} minute(s) d'inactivité. Veuillez vous reconnecter.`);
+        }
+      }
+    };
+
+    // Check every 30 seconds
+    const interval = setInterval(checkSessionExpiry, 30000);
+    
+    return () => clearInterval(interval);
+  };
+
+  const updateSessionTimeout = (newTimeout) => {
+    setSessionTimeout(newTimeout);
+    setLastActivity(Date.now()); // Reset activity timer when timeout is updated
+  };
 
   const checkAuthStatus = async () => {
     try {
