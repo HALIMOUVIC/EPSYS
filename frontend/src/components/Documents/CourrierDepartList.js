@@ -129,7 +129,7 @@ const CourrierDepartList = () => {
                 setShowForm(false);
                 setEditingDocument(null);
               }}
-              onSave={handleFormSave}
+              onSave={handleFormSuccess}
             />
           </div>
         </div>
