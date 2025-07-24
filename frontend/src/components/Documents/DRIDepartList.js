@@ -43,7 +43,7 @@ const DRIDepartList = () => {
   const handleDelete = async (documentId) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) {
       try {
-        await axios.delete(`/api/documents/${documentId}`);
+        await axios.delete(`/documents/${documentId}`);
         fetchDocuments(pagination.page);
       } catch (error) {
         console.error('Error deleting document:', error);
