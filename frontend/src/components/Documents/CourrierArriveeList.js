@@ -169,23 +169,18 @@ const CourrierArriveeList = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <InboxIcon className="w-8 h-8 text-green-600" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Gestion du Courrier Arrivé</h1>
-            <p className="text-gray-600">Gestion des courriers entrants</p>
-          </div>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Courrier Arrivé</h1>
+          <p className="text-gray-600">Gestion des courriers entrants</p>
         </div>
-        
-        <button
-          onClick={() => setShowForm(true)}
-          className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-        >
-          <PlusIcon className="w-5 h-5 mr-2" />
-          Nouveau Courrier
-        </button>
       </div>
+
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-600">{error}</p>
+        </div>
+      )}
 
       {/* Form Modal */}
       {showForm && (
