@@ -554,15 +554,7 @@ const Settings = () => {
                     <input
                       type="checkbox"
                       checked={systemInfo.system_settings?.signup_enabled || false}
-                      onChange={async (e) => {
-                        try {
-                          await axios.put(`${backendUrl}/api/settings/signup-toggle?enabled=${e.target.checked}`);
-                          showAlert('success', 'Succès', `Inscription ${e.target.checked ? 'autorisée' : 'bloquée'} avec succès`);
-                          fetchSystemInfo(); // Refresh system info
-                        } catch (error) {
-                          showAlert('error', 'Erreur', 'Échec de la modification du paramètre');
-                        }
-                      }}
+                      onChange={(e) => handleSignupToggle(e.target.checked)}
                       className="w-4 h-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                     />
                   </div>
