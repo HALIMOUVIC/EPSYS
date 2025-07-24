@@ -222,32 +222,66 @@ const CourrierArriveeViewModal = ({ document, isOpen, onClose }) => {
                 </div>
 
                 {/* Files */}
-                {document.metadata.files && document.metadata.files.length > 0 && (
+                {((document.metadata?.files && document.metadata.files.length > 0) || document.file_name) && (
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <div className="flex items-center space-x-2 mb-3">
                       <DocumentTextIcon className="w-5 h-5 text-green-600" />
                       <label className="text-sm font-semibold text-gray-700">Fichiers Joints</label>
                     </div>
                     <div className="space-y-2">
-                      {document.metadata.files.map((file, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200"
-                        >
+                      {document.metadata?.files && document.metadata.files.length > 0 ? (
+                        document.metadata.files.map((file, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200"
+                          >
+                            <div className="flex-shrink-0">
+                              <i className={`${getFileIcon(file.original_name.split('.').pop())} text-lg`}></i>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {file.original_name}
+                              </p>
+                            </div>
+                            <div className="flex space-x-2">
+                              {canPreview(file.original_name) && (
+                                <button
+                                  onClick={() => {
+                                    console.log('Preview button clicked for:', file.original_name);
+                                    handlePreview(file);
+                                  }}
+                                  className="p-2 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
+                                  title="Prévisualiser"
+                                >
+                                  <EyeIcon className="w-4 h-4" />
+                                </button>
+                              )}
+                              <button
+                                onClick={() => downloadFile(file.file_path, file.original_name)}
+                                className="p-2 text-green-600 hover:bg-green-100 rounded-full transition-colors"
+                                title="Télécharger"
+                              >
+                                <ArrowDownTrayIcon className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      ) : document.file_name && (
+                        <div className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200">
                           <div className="flex-shrink-0">
-                            <i className={`${getFileIcon(file.original_name.split('.').pop())} text-lg`}></i>
+                            <i className={`${getFileIcon(document.file_name.split('.').pop())} text-lg`}></i>
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">
-                              {file.original_name}
+                              {document.file_name}
                             </p>
                           </div>
                           <div className="flex space-x-2">
-                            {canPreview(file.original_name) && (
+                            {canPreview(document.file_name) && (
                               <button
                                 onClick={() => {
-                                  console.log('Preview button clicked for:', file.original_name);
-                                  handlePreview(file);
+                                  console.log('Preview button clicked for:', document.file_name);
+                                  handlePreview({ name: document.file_name, file_path: document.file_path });
                                 }}
                                 className="p-2 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
                                 title="Prévisualiser"
@@ -256,15 +290,15 @@ const CourrierArriveeViewModal = ({ document, isOpen, onClose }) => {
                               </button>
                             )}
                             <button
-                              onClick={() => downloadFile(file.file_path, file.original_name)}
-                              className="p-2 text-indigo-600 hover:bg-indigo-100 rounded-full transition-colors"
+                              onClick={() => downloadFile(document.file_path, document.file_name)}
+                              className="p-2 text-green-600 hover:bg-green-100 rounded-full transition-colors"
                               title="Télécharger"
                             >
                               <ArrowDownTrayIcon className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
                 )}
