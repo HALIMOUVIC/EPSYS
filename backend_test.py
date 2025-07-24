@@ -2248,6 +2248,635 @@ def test_user_settings():
     else:
         results.log_failure("Settings - Password verification setup", "Could not get username for verification")
 
+def test_calendar_event_deletion():
+    """Test Calendar Event Deletion API comprehensively"""
+    print("\n🗓️ Testing Calendar Event Deletion API...")
+    
+    # Global variables to track created events for cleanup
+    created_events = []
+    
+    # Test 1: Create test events for deletion testing
+    print("\n  Creating test events for deletion testing...")
+    
+    # Create event as regular user
+    user_event_data = {
+        "title": "User Team Meeting",
+        "description": "Weekly team sync meeting",
+        "start_date": "2025-02-15T10:00:00Z",
+        "end_date": "2025-02-15T11:00:00Z",
+        "all_day": False,
+        "color": "#3b82f6",
+        "attendees": ["team@epsys.com"],
+        "location": "Conference Room A",
+        "reminder_minutes": 15,
+        "category": "meeting"
+    }
+    
+    response = make_request("POST", "/calendar/events", user_event_data, auth_token=user_token)
+    user_event_id = None
+    if response and response.status_code == 200:
+        event = response.json()
+        user_event_id = event["id"]
+        created_events.append(user_event_id)
+        results.log_success("Calendar Event Deletion - User event creation for testing")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Calendar Event Deletion - User event creation", error_msg)
+    
+    # Create event as admin
+    admin_event_data = {
+        "title": "Admin System Maintenance",
+        "description": "Scheduled system maintenance window",
+        "start_date": "2025-02-20T02:00:00Z",
+        "end_date": "2025-02-20T04:00:00Z",
+        "all_day": False,
+        "color": "#ef4444",
+        "attendees": ["admin@epsys.com"],
+        "location": "Server Room",
+        "reminder_minutes": 30,
+        "category": "maintenance"
+    }
+    
+    response = make_request("POST", "/calendar/events", admin_event_data, auth_token=admin_token)
+    admin_event_id = None
+    if response and response.status_code == 200:
+        event = response.json()
+        admin_event_id = event["id"]
+        created_events.append(admin_event_id)
+        results.log_success("Calendar Event Deletion - Admin event creation for testing")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Calendar Event Deletion - Admin event creation", error_msg)
+    
+    # Test 2: User can delete their own events
+    print("\n  Testing user can delete own events...")
+    if user_event_id:
+        response = make_request("DELETE", f"/calendar/events/{user_event_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            data = response.json()
+            if "message" in data and "deleted successfully" in data["message"]:
+                results.log_success("Calendar Event Deletion - User can delete own event")
+                created_events.remove(user_event_id)
+            else:
+                results.log_failure("Calendar Event Deletion - User delete own", "Invalid deletion response")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("Calendar Event Deletion - User delete own", error_msg)
+    
+    # Test 3: Verify event is actually deleted
+    print("\n  Testing event deletion verification...")
+    if user_event_id:
+        response = make_request("GET", f"/calendar/events", auth_token=user_token)
+        if response and response.status_code == 200:
+            events_data = response.json()
+            events = events_data.get("events", [])
+            deleted_event_found = any(event["id"] == user_event_id for event in events)
+            
+            if not deleted_event_found:
+                results.log_success("Calendar Event Deletion - Event deletion verification")
+            else:
+                results.log_failure("Calendar Event Deletion - Deletion verification", "Deleted event still found in list")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("Calendar Event Deletion - Deletion verification", error_msg)
+    
+    # Test 4: User cannot delete other user's events
+    print("\n  Testing user cannot delete admin events...")
+    if admin_event_id:
+        response = make_request("DELETE", f"/calendar/events/{admin_event_id}", auth_token=user_token)
+        if response and response.status_code == 403:
+            results.log_success("Calendar Event Deletion - User denied access to admin event")
+        else:
+            error_detail = f"Status: {response.status_code if response else 'None'}"
+            results.log_failure("Calendar Event Deletion - Permission check", f"Should deny access - {error_detail}")
+    
+    # Test 5: Admin can delete any event
+    print("\n  Testing admin can delete any event...")
+    if admin_event_id:
+        response = make_request("DELETE", f"/calendar/events/{admin_event_id}", auth_token=admin_token)
+        if response and response.status_code == 200:
+            data = response.json()
+            if "message" in data and "deleted successfully" in data["message"]:
+                results.log_success("Calendar Event Deletion - Admin can delete any event")
+                created_events.remove(admin_event_id)
+            else:
+                results.log_failure("Calendar Event Deletion - Admin delete any", "Invalid deletion response")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("Calendar Event Deletion - Admin delete any", error_msg)
+    
+    # Test 6: Test deletion with invalid event ID
+    print("\n  Testing deletion with invalid event ID...")
+    invalid_event_id = "invalid-event-id-12345"
+    response = make_request("DELETE", f"/calendar/events/{invalid_event_id}", auth_token=user_token)
+    if response and response.status_code == 404:
+        results.log_success("Calendar Event Deletion - Invalid event ID handling")
+    else:
+        error_detail = f"Status: {response.status_code if response else 'None'}"
+        results.log_failure("Calendar Event Deletion - Invalid ID", f"Should return 404 - {error_detail}")
+    
+    # Test 7: Test deletion without authentication
+    print("\n  Testing deletion without authentication...")
+    if admin_event_id:  # Use any event ID for this test
+        response = make_request("DELETE", f"/calendar/events/{admin_event_id}")
+        if response and response.status_code in [401, 403]:
+            results.log_success("Calendar Event Deletion - Authentication required")
+        else:
+            error_detail = f"Status: {response.status_code if response else 'None'}"
+            results.log_failure("Calendar Event Deletion - Auth required", f"Should require authentication - {error_detail}")
+    
+    # Cleanup any remaining events
+    print("\n  Cleaning up remaining test events...")
+    for event_id in created_events:
+        make_request("DELETE", f"/calendar/events/{event_id}", auth_token=admin_token)
+
+def test_settings_management_apis():
+    """Test Settings Management APIs comprehensively"""
+    print("\n⚙️ Testing Settings Management APIs...")
+    
+    # Test 1: GET /api/settings - Retrieve user settings with defaults
+    print("\n  Testing settings retrieval with defaults...")
+    response = make_request("GET", "/settings", auth_token=user_token)
+    if response and response.status_code == 200:
+        settings = response.json()
+        
+        # Verify default settings structure
+        required_fields = [
+            "user_id", "full_name", "email", "phone", "bio", "avatar_url",
+            "email_notifications", "push_notifications", "document_update_notifications",
+            "message_notifications", "calendar_reminders", "two_factor_enabled",
+            "session_timeout_minutes", "password_change_required", "language",
+            "timezone", "date_format", "theme", "profile_visibility", "show_online_status"
+        ]
+        
+        missing_fields = [field for field in required_fields if field not in settings]
+        if not missing_fields:
+            results.log_success("Settings Management - Settings structure validation")
+        else:
+            results.log_failure("Settings Management - Settings structure", f"Missing fields: {missing_fields}")
+        
+        # Verify default values
+        expected_defaults = {
+            "language": "fr",
+            "timezone": "Europe/Paris", 
+            "date_format": "DD/MM/YYYY",
+            "email_notifications": True,
+            "theme": "light",
+            "profile_visibility": "internal",
+            "show_online_status": True
+        }
+        
+        defaults_correct = all(settings.get(key) == value for key, value in expected_defaults.items())
+        if defaults_correct:
+            results.log_success("Settings Management - Default values validation")
+        else:
+            results.log_failure("Settings Management - Default values", "Default values not set correctly")
+            
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings Management - Settings retrieval", error_msg)
+    
+    # Test 2: PUT /api/settings - Update user settings (profile)
+    print("\n  Testing profile settings update...")
+    profile_update = {
+        "full_name": "John Smith Updated",
+        "phone": "+213-555-0123",
+        "bio": "Senior Document Manager at EPSys - Updated profile"
+    }
+    
+    response = make_request("PUT", "/settings", profile_update, auth_token=user_token)
+    if response and response.status_code == 200:
+        updated_settings = response.json()
+        
+        if (updated_settings.get("full_name") == profile_update["full_name"] and
+            updated_settings.get("phone") == profile_update["phone"] and
+            updated_settings.get("bio") == profile_update["bio"]):
+            results.log_success("Settings Management - Profile settings update")
+        else:
+            results.log_failure("Settings Management - Profile update", "Profile settings not updated correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings Management - Profile update", error_msg)
+    
+    # Test 3: PUT /api/settings - Update notification settings
+    print("\n  Testing notification settings update...")
+    notification_update = {
+        "email_notifications": False,
+        "push_notifications": True,
+        "document_update_notifications": False,
+        "message_notifications": True,
+        "calendar_reminders": False
+    }
+    
+    response = make_request("PUT", "/settings", notification_update, auth_token=user_token)
+    if response and response.status_code == 200:
+        updated_settings = response.json()
+        
+        notifications_correct = all(
+            updated_settings.get(key) == value 
+            for key, value in notification_update.items()
+        )
+        
+        if notifications_correct:
+            results.log_success("Settings Management - Notification settings update")
+        else:
+            results.log_failure("Settings Management - Notification update", "Notification settings not updated correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings Management - Notification update", error_msg)
+    
+    # Test 4: PUT /api/settings - Update system preferences
+    print("\n  Testing system preferences update...")
+    system_update = {
+        "language": "en",
+        "timezone": "America/New_York",
+        "date_format": "MM/DD/YYYY",
+        "theme": "dark"
+    }
+    
+    response = make_request("PUT", "/settings", system_update, auth_token=user_token)
+    if response and response.status_code == 200:
+        updated_settings = response.json()
+        
+        system_correct = all(
+            updated_settings.get(key) == value 
+            for key, value in system_update.items()
+        )
+        
+        if system_correct:
+            results.log_success("Settings Management - System preferences update")
+        else:
+            results.log_failure("Settings Management - System update", "System preferences not updated correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings Management - System update", error_msg)
+    
+    # Test 5: PUT /api/settings - Update privacy settings
+    print("\n  Testing privacy settings update...")
+    privacy_update = {
+        "profile_visibility": "private",
+        "show_online_status": False,
+        "two_factor_enabled": True,
+        "session_timeout_minutes": 60
+    }
+    
+    response = make_request("PUT", "/settings", privacy_update, auth_token=user_token)
+    if response and response.status_code == 200:
+        updated_settings = response.json()
+        
+        privacy_correct = all(
+            updated_settings.get(key) == value 
+            for key, value in privacy_update.items()
+        )
+        
+        if privacy_correct:
+            results.log_success("Settings Management - Privacy settings update")
+        else:
+            results.log_failure("Settings Management - Privacy update", "Privacy settings not updated correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings Management - Privacy update", error_msg)
+    
+    # Test 6: POST /api/settings/change-password - Password change functionality
+    print("\n  Testing password change functionality...")
+    
+    # First, we need to know the current password from login
+    current_password = "UserPass456!"  # From the login test
+    new_password = "NewSecurePass789!"
+    
+    password_change_data = {
+        "current_password": current_password,
+        "new_password": new_password
+    }
+    
+    response = make_request("POST", "/settings/change-password", password_change_data, auth_token=user_token)
+    if response and response.status_code == 200:
+        data = response.json()
+        if "message" in data and "successfully" in data["message"]:
+            results.log_success("Settings Management - Password change")
+            
+            # Test 7: Verify new password works by logging in
+            print("\n  Testing login with new password...")
+            # We need to get the username from the user token, but let's create a new user for this test
+            unique_suffix = str(uuid.uuid4())[:8]
+            test_user_data = {
+                "username": f"pwd_test_{unique_suffix}",
+                "email": f"pwd_test_{unique_suffix}@epsys.com",
+                "password": "OldPassword123!",
+                "full_name": "Password Test User",
+                "role": "user"
+            }
+            
+            # Register test user
+            reg_response = make_request("POST", "/register", test_user_data)
+            if reg_response and reg_response.status_code == 200:
+                # Login to get token
+                login_data = {
+                    "username": test_user_data["username"],
+                    "password": test_user_data["password"]
+                }
+                login_response = make_request("POST", "/login", login_data)
+                if login_response and login_response.status_code == 200:
+                    test_token = login_response.json()["access_token"]
+                    
+                    # Change password
+                    pwd_change = {
+                        "current_password": "OldPassword123!",
+                        "new_password": "NewPassword456!"
+                    }
+                    change_response = make_request("POST", "/settings/change-password", pwd_change, auth_token=test_token)
+                    
+                    if change_response and change_response.status_code == 200:
+                        # Try login with new password
+                        new_login_data = {
+                            "username": test_user_data["username"],
+                            "password": "NewPassword456!"
+                        }
+                        new_login_response = make_request("POST", "/login", new_login_data)
+                        
+                        if new_login_response and new_login_response.status_code == 200:
+                            results.log_success("Settings Management - Login with new password")
+                        else:
+                            results.log_failure("Settings Management - New password login", "Cannot login with new password")
+        else:
+            results.log_failure("Settings Management - Password change", "Invalid password change response")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings Management - Password change", error_msg)
+    
+    # Test 8: POST /api/settings/change-password - Wrong current password
+    print("\n  Testing password change with wrong current password...")
+    wrong_password_data = {
+        "current_password": "WrongPassword123!",
+        "new_password": "AnotherNewPass456!"
+    }
+    
+    response = make_request("POST", "/settings/change-password", wrong_password_data, auth_token=user_token)
+    if response and response.status_code == 400:
+        results.log_success("Settings Management - Wrong current password rejection")
+    else:
+        error_detail = f"Status: {response.status_code if response else 'None'}"
+        results.log_failure("Settings Management - Wrong password", f"Should reject wrong password - {error_detail}")
+    
+    # Test 9: GET /api/settings/system-info - Admin-only system information
+    print("\n  Testing admin-only system info...")
+    response = make_request("GET", "/settings/system-info", auth_token=admin_token)
+    if response and response.status_code == 200:
+        system_info = response.json()
+        
+        # Verify system info structure
+        required_sections = ["database_stats", "document_counters", "system_settings", "system_status"]
+        missing_sections = [section for section in required_sections if section not in system_info]
+        
+        if not missing_sections:
+            results.log_success("Settings Management - Admin system info structure")
+            
+            # Verify database stats
+            db_stats = system_info.get("database_stats", {})
+            required_db_fields = ["total_users", "total_documents", "total_folders", "total_files", "total_events"]
+            missing_db_fields = [field for field in required_db_fields if field not in db_stats]
+            
+            if not missing_db_fields:
+                results.log_success("Settings Management - Database statistics")
+            else:
+                results.log_failure("Settings Management - DB stats", f"Missing fields: {missing_db_fields}")
+            
+            # Verify document counters
+            doc_counters = system_info.get("document_counters", {})
+            required_counter_fields = ["current_year", "courrier_depart", "courrier_arrive", "dri_depart", "om_approval"]
+            missing_counter_fields = [field for field in required_counter_fields if field not in doc_counters]
+            
+            if not missing_counter_fields:
+                results.log_success("Settings Management - Document counters display")
+            else:
+                results.log_failure("Settings Management - Doc counters", f"Missing fields: {missing_counter_fields}")
+                
+        else:
+            results.log_failure("Settings Management - System info structure", f"Missing sections: {missing_sections}")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings Management - Admin system info", error_msg)
+    
+    # Test 10: GET /api/settings/system-info - Regular user denied access
+    print("\n  Testing regular user denied system info access...")
+    response = make_request("GET", "/settings/system-info", auth_token=user_token)
+    if response and response.status_code == 403:
+        results.log_success("Settings Management - User denied system info access")
+    else:
+        error_detail = f"Status: {response.status_code if response else 'None'}"
+        results.log_failure("Settings Management - System info access", f"Should deny user access - {error_detail}")
+    
+    # Test 11: PUT /api/settings/signup-toggle - Admin-only signup toggle
+    print("\n  Testing admin-only signup toggle...")
+    response = make_request("PUT", "/settings/signup-toggle?enabled=false", auth_token=admin_token)
+    if response and response.status_code == 200:
+        data = response.json()
+        if "signup_enabled" in data and data["signup_enabled"] == False:
+            results.log_success("Settings Management - Admin signup toggle (disable)")
+        else:
+            results.log_failure("Settings Management - Signup toggle", "Invalid toggle response")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings Management - Admin signup toggle", error_msg)
+    
+    # Test 12: PUT /api/settings/signup-toggle - Regular user denied access
+    print("\n  Testing regular user denied signup toggle access...")
+    response = make_request("PUT", "/settings/signup-toggle?enabled=true", auth_token=user_token)
+    if response and response.status_code == 403:
+        results.log_success("Settings Management - User denied signup toggle access")
+    else:
+        error_detail = f"Status: {response.status_code if response else 'None'}"
+        results.log_failure("Settings Management - Signup toggle access", f"Should deny user access - {error_detail}")
+
+def test_profile_management_features():
+    """Test Profile Management Features through Settings APIs"""
+    print("\n👤 Testing Profile Management Features...")
+    
+    # Test 1: Profile photo upload (base64 format)
+    print("\n  Testing profile photo upload (base64)...")
+    
+    # Create a simple base64 encoded image (1x1 pixel PNG)
+    base64_image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+    
+    profile_photo_update = {
+        "avatar_url": base64_image
+    }
+    
+    response = make_request("PUT", "/settings", profile_photo_update, auth_token=user_token)
+    if response and response.status_code == 200:
+        updated_settings = response.json()
+        
+        if updated_settings.get("avatar_url") == base64_image:
+            results.log_success("Profile Management - Profile photo upload (base64)")
+        else:
+            results.log_failure("Profile Management - Photo upload", "Base64 image not stored correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Profile Management - Photo upload", error_msg)
+    
+    # Test 2: Personal information management
+    print("\n  Testing personal information management...")
+    personal_info_update = {
+        "full_name": "Jean-Pierre Dubois",
+        "phone": "+33-1-23-45-67-89",
+        "bio": "Responsable de la gestion documentaire chez EPSys. Spécialisé dans l'optimisation des processus administratifs et la digitalisation des documents officiels."
+    }
+    
+    response = make_request("PUT", "/settings", personal_info_update, auth_token=user_token)
+    if response and response.status_code == 200:
+        updated_settings = response.json()
+        
+        info_correct = all(
+            updated_settings.get(key) == value 
+            for key, value in personal_info_update.items()
+        )
+        
+        if info_correct:
+            results.log_success("Profile Management - Personal information update")
+        else:
+            results.log_failure("Profile Management - Personal info", "Personal information not updated correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Profile Management - Personal info", error_msg)
+    
+    # Test 3: Privacy settings management
+    print("\n  Testing privacy settings management...")
+    privacy_settings_update = {
+        "profile_visibility": "public",
+        "show_online_status": True
+    }
+    
+    response = make_request("PUT", "/settings", privacy_settings_update, auth_token=user_token)
+    if response and response.status_code == 200:
+        updated_settings = response.json()
+        
+        if (updated_settings.get("profile_visibility") == "public" and
+            updated_settings.get("show_online_status") == True):
+            results.log_success("Profile Management - Privacy settings")
+        else:
+            results.log_failure("Profile Management - Privacy settings", "Privacy settings not updated correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Profile Management - Privacy settings", error_msg)
+    
+    # Test 4: Test different profile visibility options
+    print("\n  Testing profile visibility options...")
+    visibility_options = ["public", "internal", "private"]
+    
+    for visibility in visibility_options:
+        visibility_update = {"profile_visibility": visibility}
+        response = make_request("PUT", "/settings", visibility_update, auth_token=user_token)
+        
+        if response and response.status_code == 200:
+            updated_settings = response.json()
+            if updated_settings.get("profile_visibility") == visibility:
+                results.log_success(f"Profile Management - Visibility '{visibility}' option")
+            else:
+                results.log_failure(f"Profile Management - Visibility {visibility}", f"Visibility not set to {visibility}")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure(f"Profile Management - Visibility {visibility}", error_msg)
+    
+    # Test 5: Profile fields validation and persistence
+    print("\n  Testing profile fields validation and persistence...")
+    
+    # Get current settings to verify persistence
+    response = make_request("GET", "/settings", auth_token=user_token)
+    if response and response.status_code == 200:
+        current_settings = response.json()
+        
+        # Verify that our previous updates are still there
+        expected_values = {
+            "full_name": "Jean-Pierre Dubois",
+            "phone": "+33-1-23-45-67-89",
+            "profile_visibility": "private",  # Last one we set
+            "show_online_status": True
+        }
+        
+        persistence_correct = all(
+            current_settings.get(key) == value 
+            for key, value in expected_values.items()
+        )
+        
+        if persistence_correct:
+            results.log_success("Profile Management - Settings persistence")
+        else:
+            results.log_failure("Profile Management - Persistence", "Settings not persisted correctly")
+            
+        # Verify avatar_url is still there
+        if current_settings.get("avatar_url") == base64_image:
+            results.log_success("Profile Management - Avatar persistence")
+        else:
+            results.log_failure("Profile Management - Avatar persistence", "Avatar not persisted")
+            
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Profile Management - Settings persistence", error_msg)
+    
+    # Test 6: Profile update with empty/null values
+    print("\n  Testing profile update with empty values...")
+    empty_update = {
+        "phone": None,
+        "bio": ""
+    }
+    
+    response = make_request("PUT", "/settings", empty_update, auth_token=user_token)
+    if response and response.status_code == 200:
+        updated_settings = response.json()
+        
+        # Phone should be None/null, bio should be empty string
+        if (updated_settings.get("phone") is None and
+            updated_settings.get("bio") == ""):
+            results.log_success("Profile Management - Empty values handling")
+        else:
+            results.log_failure("Profile Management - Empty values", "Empty values not handled correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Profile Management - Empty values", error_msg)
+    
+    # Test 7: Large bio text handling
+    print("\n  Testing large bio text handling...")
+    large_bio = "A" * 1000  # 1000 character bio
+    
+    large_bio_update = {
+        "bio": large_bio
+    }
+    
+    response = make_request("PUT", "/settings", large_bio_update, auth_token=user_token)
+    if response and response.status_code == 200:
+        updated_settings = response.json()
+        
+        if updated_settings.get("bio") == large_bio:
+            results.log_success("Profile Management - Large bio text handling")
+        else:
+            results.log_failure("Profile Management - Large bio", "Large bio not stored correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Profile Management - Large bio", error_msg)
+    
+    # Test 8: International phone number formats
+    print("\n  Testing international phone number formats...")
+    phone_formats = [
+        "+1-555-123-4567",      # US format
+        "+33 1 23 45 67 89",    # French format
+        "+213-21-123-456",      # Algerian format
+        "+44 20 7123 4567"      # UK format
+    ]
+    
+    for phone_format in phone_formats:
+        phone_update = {"phone": phone_format}
+        response = make_request("PUT", "/settings", phone_update, auth_token=user_token)
+        
+        if response and response.status_code == 200:
+            updated_settings = response.json()
+            if updated_settings.get("phone") == phone_format:
+                results.log_success(f"Profile Management - Phone format '{phone_format[:10]}...'")
+            else:
+                results.log_failure(f"Profile Management - Phone format", f"Phone format not stored: {phone_format}")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure(f"Profile Management - Phone format", error_msg)
+
 def run_all_tests():
     """Run all backend tests"""
     print("🚀 Starting EPSys Backend API Tests...")
@@ -2280,6 +2909,14 @@ def run_all_tests():
         # NEW: Calendar and Settings tests
         test_calendar_management()
         test_user_settings()
+        
+        # PRIMARY TEST FOCUS - Review Request Tests
+        print("\n" + "="*80)
+        print("🎯 PRIMARY TEST FOCUS - Review Request Features")
+        print("="*80)
+        test_calendar_event_deletion()
+        test_settings_management_apis()
+        test_profile_management_features()
         
         # Role-based access tests
         test_role_based_access()
