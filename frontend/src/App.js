@@ -224,6 +224,17 @@ const AppContent = () => {
         />
 
         <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <MainLayout title="Profile" subtitle="User information and privacy">
+                <Profile />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/settings"
           element={
             <ProtectedRoute requireAdmin={true}>
