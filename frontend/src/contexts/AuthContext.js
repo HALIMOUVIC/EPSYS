@@ -48,13 +48,25 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sessionTimeout, setSessionTimeout] = useState(30); // Default 30 minutes
-  const [lastActivity, setLastActivity] = useState(Date.now());
+  
+  // Use useRef to avoid re-renders when updating last activity
+  const lastActivityRef = useRef(Date.now());
+  const sessionTimerRef = useRef(null);
+  const activityEventsSetup = useRef(false);
 
   useEffect(() => {
     checkAuthStatus();
     loadSessionTimeout();
     setupActivityTracking();
     startSessionTimer();
+    
+    return () => {
+      // Cleanup on unmount
+      if (sessionTimerRef.current) {
+        clearInterval(sessionTimerRef.current);
+      }
+      cleanupActivityTracking();
+    };
   }, []);
 
   useEffect(() => {
@@ -76,50 +88,97 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const setupActivityTracking = () => {
-    const updateActivity = () => {
-      setLastActivity(Date.now());
-    };
+  const updateLastActivity = () => {
+    lastActivityRef.current = Date.now();
+  };
 
-    // Track various user activities
+  const setupActivityTracking = () => {
+    if (activityEventsSetup.current) return;
+    
+    // Track various user activities without causing re-renders
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
     
     events.forEach(event => {
-      document.addEventListener(event, updateActivity, true);
+      document.addEventListener(event, updateLastActivity, { passive: true, capture: true });
     });
+    
+    activityEventsSetup.current = true;
+  };
 
-    // Cleanup function
-    return () => {
-      events.forEach(event => {
-        document.removeEventListener(event, updateActivity, true);
-      });
-    };
+  const cleanupActivityTracking = () => {
+    if (!activityEventsSetup.current) return;
+    
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    events.forEach(event => {
+      document.removeEventListener(event, updateLastActivity, { capture: true });
+    });
+    
+    activityEventsSetup.current = false;
   };
 
   const startSessionTimer = () => {
-    const checkSessionExpiry = () => {
+    // Clear existing timer
+    if (sessionTimerRef.current) {
+      clearInterval(sessionTimerRef.current);
+    }
+    
+    // Check session expiry every 30 seconds
+    sessionTimerRef.current = setInterval(() => {
       if (user && sessionTimeout > 0) {
         const now = Date.now();
         const timeoutMs = sessionTimeout * 60 * 1000; // Convert minutes to milliseconds
-        const timeSinceLastActivity = now - lastActivity;
+        const timeSinceLastActivity = now - lastActivityRef.current;
 
         if (timeSinceLastActivity >= timeoutMs) {
           console.log(`Session expired after ${sessionTimeout} minutes of inactivity`);
-          logout();
-          alert(`Votre session a expiré après ${sessionTimeout} minute(s) d'inactivité. Veuillez vous reconnecter.`);
+          
+          // Clear the timer before logout to prevent multiple calls
+          if (sessionTimerRef.current) {
+            clearInterval(sessionTimerRef.current);
+            sessionTimerRef.current = null;
+          }
+          
+          // Perform logout
+          handleSessionExpiry();
         }
       }
-    };
+    }, 30000);
+  };
 
-    // Check every 30 seconds
-    const interval = setInterval(checkSessionExpiry, 30000);
+  const handleSessionExpiry = () => {
+    // Clean logout without page reload
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    setUser(null);
     
-    return () => clearInterval(interval);
+    // Show alert and redirect
+    alert(`Votre session a expiré après ${sessionTimeout} minute(s) d'inactivité. Veuillez vous reconnecter.`);
+    
+    // Force redirect to login without page reload
+    window.history.pushState({}, '', '/login');
+    window.location.reload();
   };
 
   const updateSessionTimeout = (newTimeout) => {
     setSessionTimeout(newTimeout);
-    setLastActivity(Date.now()); // Reset activity timer when timeout is updated
+    lastActivityRef.current = Date.now(); // Reset activity timer when timeout is updated
+    
+    // Restart session timer with new timeout
+    startSessionTimer();
+  };
+
+  const getRemainingTime = () => {
+    if (!user || sessionTimeout <= 0) return null;
+    
+    const now = Date.now();
+    const timeoutMs = sessionTimeout * 60 * 1000;
+    const timeSinceLastActivity = now - lastActivityRef.current;
+    const remainingMs = timeoutMs - timeSinceLastActivity;
+    
+    if (remainingMs <= 0) return 0;
+    
+    return Math.ceil(remainingMs / (60 * 1000)); // Return remaining minutes
   };
 
   const checkAuthStatus = async () => {
