@@ -254,6 +254,36 @@ backend:
           agent: "testing"
           comment: "TESTED: Enhanced File Manager Backend APIs are WORKING SUCCESSFULLY! Comprehensive testing completed with 13/15 specific file manager tests passing (87% success rate). Key findings: (1) Folder Management APIs: All CRUD operations working correctly - GET /api/file-manager/folders returns proper structure with folders and files, POST creates folders with user tracking (created_by, created_by_name), PUT updates folder names with path management, DELETE performs recursive deletion of folder contents. (2) File Management APIs: File upload to folders working with user attribution (uploaded_by_name), file download working correctly, file deletion with permission checks functional. (3) User Tracking Verification: Folders properly track created_by and created_by_name, files track created_by and uploaded_by_name, user information correctly displayed. (4) Data Integrity: Hierarchical folder structure working (parent-child relationships), path management updates correctly when folders renamed (/parent/child format), recursive deletion removes all folder contents including subfolders and files. (5) Search Functionality: GET /api/file-manager/search working correctly, finds folders and files by name using regex search. Minor issues found: duplicate folder prevention needs improvement, folder file listing has minor query issue, permission checks need refinement. However, ALL CORE FUNCTIONALITY from the review request is working perfectly. The Enhanced File Manager Backend is fully functional and ready for frontend integration."
 
+  - task: "File Manager File Renaming Feature"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Testing newly added File Manager file renaming feature (PUT /api/file-manager/files/{file_id}) as requested in review."
+        - working: true
+          agent: "testing"
+          comment: "TESTED: File Manager File Renaming Feature is FULLY WORKING! Comprehensive testing completed with all core functionality verified. Key findings: (1) Valid File Renaming: PUT /api/file-manager/files/{file_id} successfully renames files with valid new names, returns updated file information with correct name and original_name fields. (2) Error Handling: Properly rejects empty names (returns 422), rejects whitespace-only names (returns 400), handles non-existent files correctly (returns 404). (3) Permission Checks: Users can only rename their own files, admin users can rename any file, unauthorized rename attempts properly denied with 403 status. (4) Response Structure: Returns complete file information including id, name, original_name, file_path, folder_id, file_size, mime_type, created_by, uploaded_by_name, created_at, updated_at. (5) Data Integrity: File renaming updates both name and original_name fields correctly, maintains all other file metadata. The file renaming feature works exactly as specified in the review request with proper validation, permission checks, and error handling."
+
+  - task: "File Manager File Preview Feature"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Testing newly added File Manager file preview feature (GET /api/file-manager/preview/{file_id}) as requested in review."
+        - working: true
+          agent: "testing"
+          comment: "TESTED: File Manager File Preview Feature is FULLY WORKING! Comprehensive testing completed with all file types and functionality verified. Key findings: (1) Text File Preview: Successfully previews text files (txt, json, csv, md, xml, html, css, js, py) with preview_type='text', can_preview=true, and content field containing file text (truncated at 10000 characters). (2) Image File Preview: Successfully handles image files (jpg, jpeg, png, gif, bmp, webp, svg) with preview_type='image', can_preview=true, and file_url field pointing to download endpoint. (3) PDF File Preview: Successfully handles PDF files with preview_type='pdf', can_preview=true, and file_url field for direct viewing. (4) Office Document Preview: Properly handles office documents (doc, docx, xls, xlsx, ppt, pptx) with preview_type='office', can_preview=false, and informative message about download requirement. (5) Unknown File Types: Handles unknown extensions with preview_type='unknown', can_preview=false, and appropriate message. (6) Error Handling: Returns 404 for non-existent files, proper error messages for missing files. (7) Response Structure: All responses include required fields (file_id, name, file_size, mime_type, preview_type, can_preview) plus appropriate content/file_url based on file type. (8) File Extension Recognition: Correctly identifies file types based on extensions and provides appropriate preview capabilities. The file preview feature works exactly as specified in the review request with comprehensive file type support and proper error handling."
+
   - task: "UI Layout and Navigation"
     implemented: true
     working: true
