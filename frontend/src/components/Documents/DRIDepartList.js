@@ -114,7 +114,18 @@ const DRIDepartList = () => {
 
   const downloadFile = async (filePath, originalName) => {
     try {
-      const response = await axios.get(`/documents/download/${encodeURIComponent(filePath)}`, {
+      console.log('Downloading file:', originalName);
+      console.log('File path:', filePath);
+      
+      // Extract relative path from absolute path if needed
+      let relativePath = filePath;
+      if (filePath.includes('/uploads/')) {
+        relativePath = filePath.split('/uploads/')[1];
+      }
+      
+      console.log('Using relative path:', relativePath);
+      
+      const response = await axios.get(`/documents/download/${encodeURIComponent(relativePath)}`, {
         responseType: 'blob'
       });
       
@@ -130,6 +141,7 @@ const DRIDepartList = () => {
       ModernAlert.success('Téléchargement', `Fichier "${originalName}" téléchargé avec succès`);
     } catch (error) {
       console.error('Error downloading file:', error);
+      console.error('Error details:', error.response?.data || error.message);
       ModernAlert.error('Erreur', 'Erreur lors du téléchargement du fichier');
     }
   };
