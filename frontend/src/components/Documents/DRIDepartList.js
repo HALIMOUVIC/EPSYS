@@ -46,13 +46,19 @@ const DRIDepartList = () => {
   }, []);
 
   const handleDelete = async (documentId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) {
+    const confirmed = await ModernAlert.confirm(
+      'Supprimer le document', 
+      'Êtes-vous sûr de vouloir supprimer ce document ? Cette action est irréversible.'
+    );
+    
+    if (confirmed) {
       try {
         await axios.delete(`/documents/${documentId}`);
+        ModernAlert.success('Succès', 'Document supprimé avec succès');
         fetchDocuments(pagination.page);
       } catch (error) {
         console.error('Error deleting document:', error);
-        alert('Erreur lors de la suppression du document');
+        ModernAlert.error('Erreur', 'Erreur lors de la suppression du document');
       }
     }
   };
