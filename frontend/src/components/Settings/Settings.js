@@ -340,13 +340,16 @@ const Settings = () => {
               <label className="block font-medium text-gray-900 mb-2">Expiration de session (minutes)</label>
               <input
                 type="number"
-                min="5"
+                min="1"
                 max="480"
                 value={settings.session_timeout_minutes}
                 onChange={(e) => handleInputChange('session_timeout_minutes', parseInt(e.target.value))}
                 onBlur={(e) => handleInputChange('session_timeout_minutes', parseInt(e.target.value))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                La session expirera automatiquement après {settings.session_timeout_minutes} minute(s) d'inactivité.
+              </p>
             </div>
 
             <div className="pt-4 border-t border-gray-200">
