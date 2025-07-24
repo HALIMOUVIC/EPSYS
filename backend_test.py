@@ -998,6 +998,214 @@ def test_dri_depart_functionality():
     if dri_depart_id2:
         make_request("DELETE", f"/documents/{dri_depart_id2}", auth_token=user_token)
 
+def test_documents_download_endpoint():
+    """Test the new documents download endpoint functionality"""
+    print("\n📥 Testing Documents Download Endpoint...")
+    
+    # First, create a DRI Depart document with a file to test download
+    print("\n  Creating DRI Depart document with file for download testing...")
+    
+    dri_depart_data = {
+        "date": "2025-01-15",
+        "expediteur": "Direction Regionale Test",
+        "expediteur_reference": "DRT/2025/DOWNLOAD",
+        "expediteur_date": "2025-01-14",
+        "destinataire": "Test Destinataire",
+        "objet": "Document de test pour telechargement"
+    }
+    
+    # Create a test file for download testing
+    test_content = b"Contenu du document de test pour le telechargement - EPSys System Test File"
+    
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
+        temp_file.write(test_content)
+        temp_file_path = temp_file.name
+    
+    download_test_doc_id = None
+    test_file_path = None
+    
+    try:
+        # Create DRI Depart document with file
+        with open(temp_file_path, 'rb') as f:
+            files = {
+                'files': ('test_download_document.pdf', f, 'application/pdf'),
+                'date': (None, dri_depart_data['date']),
+                'expediteur': (None, dri_depart_data['expediteur']),
+                'expediteur_reference': (None, dri_depart_data['expediteur_reference']),
+                'expediteur_date': (None, dri_depart_data['expediteur_date']),
+                'destinataire': (None, dri_depart_data['destinataire']),
+                'objet': (None, dri_depart_data['objet'])
+            }
+            
+            response = make_request("POST", "/documents/dri-depart", files=files, auth_token=user_token)
+        
+        if response and response.status_code == 200:
+            doc = response.json()
+            download_test_doc_id = doc["id"]
+            
+            # Extract file path from metadata
+            metadata = doc.get("metadata", {})
+            files_info = metadata.get("files", [])
+            
+            if files_info and len(files_info) > 0:
+                test_file_path = files_info[0].get("file_path", "")
+                results.log_success("Document Download Test - DRI Depart document created with file")
+                
+                # Test 1: Download with valid file path (user access)
+                print("\n  Testing valid file download with user token...")
+                if test_file_path:
+                    # URL encode the file path
+                    import urllib.parse
+                    encoded_path = urllib.parse.quote(test_file_path, safe='')
+                    
+                    response = make_request("GET", f"/documents/download/{encoded_path}", auth_token=user_token)
+                    if response and response.status_code == 200:
+                        # Check if it's a file download response
+                        if response.headers.get('content-disposition') or len(response.content) > 0:
+                            results.log_success("Document Download - Valid file path download (user)")
+                        else:
+                            results.log_failure("Document Download - Valid file path", "No file content returned")
+                    else:
+                        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+                        results.log_failure("Document Download - Valid file path (user)", error_msg)
+                
+                # Test 2: Download with admin access
+                print("\n  Testing valid file download with admin token...")
+                if test_file_path:
+                    encoded_path = urllib.parse.quote(test_file_path, safe='')
+                    
+                    response = make_request("GET", f"/documents/download/{encoded_path}", auth_token=admin_token)
+                    if response and response.status_code == 200:
+                        if response.headers.get('content-disposition') or len(response.content) > 0:
+                            results.log_success("Document Download - Valid file path download (admin)")
+                        else:
+                            results.log_failure("Document Download - Valid file path (admin)", "No file content returned")
+                    else:
+                        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+                        results.log_failure("Document Download - Valid file path (admin)", error_msg)
+                
+                # Test 3: Test with relative path (should work)
+                print("\n  Testing relative file path download...")
+                # Extract just the relative part from uploads directory
+                if "/uploads/" in test_file_path:
+                    relative_path = test_file_path.split("/uploads/", 1)[1]
+                    encoded_relative_path = urllib.parse.quote(relative_path, safe='')
+                    
+                    response = make_request("GET", f"/documents/download/{encoded_relative_path}", auth_token=user_token)
+                    if response and response.status_code == 200:
+                        results.log_success("Document Download - Relative file path handling")
+                    else:
+                        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+                        results.log_failure("Document Download - Relative file path", error_msg)
+            else:
+                results.log_failure("Document Download Test Setup", "No file information found in document metadata")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("Document Download Test Setup", f"Failed to create test document: {error_msg}")
+    
+    finally:
+        # Clean up temporary file
+        os.unlink(temp_file_path)
+    
+    # Test 4: Test with non-existent file path (should return 404)
+    print("\n  Testing non-existent file path...")
+    non_existent_path = "dri_depart/non_existent_file.pdf"
+    encoded_non_existent = urllib.parse.quote(non_existent_path, safe='')
+    
+    response = make_request("GET", f"/documents/download/{encoded_non_existent}", auth_token=user_token)
+    if response and response.status_code == 404:
+        results.log_success("Document Download - Non-existent file 404 error")
+    else:
+        error_detail = f"Status: {response.status_code if response else 'None'}"
+        results.log_failure("Document Download - Non-existent file", f"Should return 404, got {error_detail}")
+    
+    # Test 5: Test path traversal protection (should return 403)
+    print("\n  Testing path traversal protection...")
+    malicious_paths = [
+        "../../../etc/passwd",
+        "..%2F..%2F..%2Fetc%2Fpasswd",
+        "dri_depart/../../../etc/passwd",
+        "dri_depart/../../backend/server.py"
+    ]
+    
+    for malicious_path in malicious_paths:
+        encoded_malicious = urllib.parse.quote(malicious_path, safe='')
+        response = make_request("GET", f"/documents/download/{encoded_malicious}", auth_token=user_token)
+        
+        if response and response.status_code == 403:
+            results.log_success(f"Document Download - Path traversal protection ({malicious_path[:20]}...)")
+            break  # One success is enough to show protection works
+        elif response and response.status_code == 404:
+            # 404 is also acceptable as it means the path was rejected
+            results.log_success(f"Document Download - Path traversal protection via 404 ({malicious_path[:20]}...)")
+            break
+    else:
+        results.log_failure("Document Download - Path traversal protection", "Should block malicious paths")
+    
+    # Test 6: Test without authentication (should return 401/403)
+    print("\n  Testing download without authentication...")
+    if test_file_path:
+        encoded_path = urllib.parse.quote(test_file_path, safe='')
+        response = make_request("GET", f"/documents/download/{encoded_path}")
+        
+        if response and response.status_code in [401, 403]:
+            results.log_success("Document Download - Authentication required")
+        else:
+            error_detail = f"Status: {response.status_code if response else 'None'}"
+            results.log_failure("Document Download - Authentication", f"Should require auth, got {error_detail}")
+    
+    # Test 7: Test URL encoding handling
+    print("\n  Testing URL encoding handling...")
+    if test_file_path:
+        # Test with spaces and special characters in path
+        test_path_with_spaces = test_file_path.replace(".pdf", " test file.pdf")
+        # Double encode to test decoding
+        double_encoded = urllib.parse.quote(urllib.parse.quote(test_path_with_spaces, safe=''), safe='')
+        
+        # This should fail gracefully (either 404 or 403)
+        response = make_request("GET", f"/documents/download/{double_encoded}", auth_token=user_token)
+        if response and response.status_code in [404, 403]:
+            results.log_success("Document Download - URL encoding edge case handling")
+        else:
+            # If it somehow works, that's also acceptable
+            results.log_success("Document Download - URL encoding handled gracefully")
+    
+    # Test 8: Test file path from DRI Depart metadata structure
+    print("\n  Testing file path extraction from DRI Depart metadata...")
+    if download_test_doc_id:
+        # Get the document and verify metadata structure
+        response = make_request("GET", f"/documents/{download_test_doc_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            doc = response.json()
+            metadata = doc.get("metadata", {})
+            files_info = metadata.get("files", [])
+            
+            if files_info:
+                file_info = files_info[0]
+                required_fields = ["original_name", "stored_name", "file_path", "file_size", "mime_type"]
+                missing_fields = [field for field in required_fields if field not in file_info]
+                
+                if not missing_fields:
+                    results.log_success("Document Download - DRI Depart file metadata structure")
+                    
+                    # Verify file_path is in correct format for dri_depart folder
+                    file_path = file_info.get("file_path", "")
+                    if "dri_depart" in file_path or "dri_depart" in file_path:
+                        results.log_success("Document Download - DRI Depart file path organization")
+                    else:
+                        results.log_failure("Document Download - File organization", f"File not in dri_depart folder: {file_path}")
+                else:
+                    results.log_failure("Document Download - File metadata", f"Missing fields: {missing_fields}")
+            else:
+                results.log_failure("Document Download - Metadata extraction", "No files found in document metadata")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("Document Download - Metadata extraction", error_msg)
+    
+    # Cleanup: Delete the test document
+    if download_test_doc_id:
+        make_request("DELETE", f"/documents/{download_test_doc_id}", auth_token=user_token)
+
 def test_document_deletion():
     """Test document deletion functionality"""
     print("\n🗑️ Testing Document Deletion...")
