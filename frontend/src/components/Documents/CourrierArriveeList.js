@@ -260,82 +260,127 @@ const CourrierArriveeList = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-green-100">
-              {filteredDocuments.map((doc) => (
-                <tr key={doc.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {doc.reference || `ARR-${new Date(doc.created_at).getFullYear()}-${String(doc.id).padStart(3, '0')}`}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {doc.metadata?.date_reception ? formatDate(doc.metadata.date_reception) : formatDate(doc.created_at)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {doc.metadata?.expediteur || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {doc.metadata?.reference_expediteur || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {doc.metadata?.date_courrier ? formatDate(doc.metadata.date_courrier) : '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {doc.metadata?.destinataire || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                    {doc.metadata?.objet || doc.title}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {doc.file_name ? (
-                      <div className="flex items-center space-x-2">
-                        <PaperClipIcon className="w-4 h-4 text-gray-400" />
-                        <a
-                          href={`${process.env.REACT_APP_BACKEND_URL}/uploads/${doc.file_path?.split('/').pop()}`}
-                          download={doc.file_name}
-                          className="text-green-600 hover:text-green-800 text-sm"
-                        >
-                          {doc.file_name}
-                        </a>
+              {filteredDocuments.length === 0 ? (
+                <tr>
+                  <td colSpan="9" className="px-6 py-16 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-4">
+                      <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center">
+                        <i className="fas fa-inbox text-4xl text-green-400"></i>
                       </div>
-                    ) : (
-                      <span className="text-gray-400 text-sm">Aucun fichier</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                    <div className="flex items-center justify-center space-x-2">
+                      <p className="text-xl font-semibold text-gray-600">
+                        {searchTerm ? 'Aucun résultat trouvé' : 'Aucun courrier arrivé'}
+                      </p>
+                      <p className="text-gray-500 max-w-md text-center">
+                        {searchTerm ? 'Essayez avec des termes de recherche différents.' : 'Vous n\'avez pas encore de courriers arrivés enregistrés. Commencez par en ajouter un nouveau.'}
+                      </p>
                       <button
-                        onClick={() => window.open(`/documents/${doc.id}`, '_blank')}
-                        className="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50"
-                        title="Voir"
+                        onClick={() => setShowForm(true)}
+                        className="mt-2 px-6 py-3 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-all duration-300 transform hover:scale-105 hover:shadow-lg flex items-center"
                       >
-                        <EyeIcon className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(doc)}
-                        className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
-                        title="Modifier"
-                      >
-                        <PencilIcon className="w-4 h-4" />
-                      </button>
-                      {doc.file_name && (
-                        <a
-                          href={`${process.env.REACT_APP_BACKEND_URL}/uploads/${doc.file_path?.split('/').pop()}`}
-                          download={doc.file_name}
-                          className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
-                          title="Télécharger"
-                        >
-                          <ArrowDownTrayIcon className="w-4 h-4" />
-                        </a>
-                      )}
-                      <button
-                        onClick={() => handleDelete(doc.id)}
-                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
-                        title="Supprimer"
-                      >
-                        <TrashIcon className="w-4 h-4" />
+                        <i className="fas fa-plus mr-2"></i>
+                        Ajouter un courrier
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredDocuments.map((doc, index) => (
+                  <tr key={doc.id} className={`hover:bg-green-50 transition-all duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-green-50/50'}`}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-semibold text-green-700 flex items-center">
+                        <HashtagIcon className="w-4 h-4 text-green-600 mr-2" />
+                        <span>{doc.reference || `ARR-${new Date(doc.created_at).getFullYear()}-${String(doc.id).padStart(3, '0')}`}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-700 flex items-center">
+                        <span className="bg-blue-100 p-1 rounded-md mr-2 text-blue-600">
+                          <i className="far fa-calendar-alt"></i>
+                        </span>
+                        {doc.metadata?.date_reception ? formatDate(doc.metadata.date_reception) : formatDate(doc.created_at)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">
+                        {doc.metadata?.expediteur || '-'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-700">
+                        {doc.metadata?.reference_expediteur || '-'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-700">
+                        {doc.metadata?.date_courrier ? formatDate(doc.metadata.date_courrier) : '-'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {doc.metadata?.destinataire || '-'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 max-w-xs truncate">
+                        {doc.metadata?.objet || doc.title}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {doc.metadata?.files && doc.metadata.files.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {doc.metadata.files.map((file, fileIndex) => (
+                            <button
+                              key={fileIndex}
+                              onClick={() => downloadFile(file.file_path, file.original_name)}
+                              className="flex items-center space-x-1 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full hover:bg-blue-200 transition-colors"
+                              title={`Télécharger ${file.original_name}`}
+                            >
+                              <i className={getFileIcon(file.original_name)}></i>
+                              <span className="max-w-20 truncate">{file.original_name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : doc.file_name ? (
+                        <button
+                          onClick={() => downloadFile(doc.file_path, doc.file_name)}
+                          className="flex items-center space-x-1 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full hover:bg-blue-200 transition-colors"
+                          title={`Télécharger ${doc.file_name}`}
+                        >
+                          <i className={getFileIcon(doc.file_name)}></i>
+                          <span className="max-w-20 truncate">{doc.file_name}</span>
+                        </button>
+                      ) : (
+                        <span className="text-gray-400 text-sm">Aucun fichier</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="flex items-center justify-center space-x-2">
+                        <button
+                          onClick={() => handleView(doc)}
+                          className="text-blue-600 hover:text-white bg-blue-100 hover:bg-blue-600 p-2 rounded-full transition-all duration-300 transform hover:scale-110 shadow-sm hover:shadow-md"
+                          title="Voir les détails"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleEdit(doc)}
+                          className="text-green-600 hover:text-white bg-green-100 hover:bg-green-600 p-2 rounded-full transition-all duration-300 transform hover:scale-110 shadow-sm hover:shadow-md"
+                          title="Modifier ce courrier"
+                        >
+                          <PencilIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(doc.id)}
+                          className="text-red-600 hover:text-white bg-red-100 hover:bg-red-600 p-2 rounded-full transition-all duration-300 transform hover:scale-110 shadow-sm hover:shadow-md"
+                          title="Supprimer ce courrier"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
