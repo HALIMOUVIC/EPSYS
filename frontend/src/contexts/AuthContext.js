@@ -212,7 +212,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('authToken', access_token);
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
-      setLastActivity(Date.now()); // Initialize activity tracking
+      lastActivityRef.current = Date.now(); // Initialize activity tracking
       
       return { success: true };
     } catch (error) {
