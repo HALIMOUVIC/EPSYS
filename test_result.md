@@ -192,6 +192,21 @@ backend:
           agent: "testing"
           comment: "TESTED: Messaging system fully functional. Message creation works with proper sender/recipient handling. Message listing shows messages for both senders and recipients. Mark message as read functionality working. Unread message tracking integrated with dashboard statistics. Message-document linking supported."
 
+  - task: "DRI Depart Functionality"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Testing newly implemented DRI Depart functionality with focus on document creation, retrieval, data validation, reference generation, file upload, CRUD operations, and permissions."
+        - working: true
+          agent: "testing"
+          comment: "TESTED: DRI Depart functionality is FULLY WORKING! Comprehensive backend testing completed with 14/14 specific DRI Depart tests passing. Key findings: (1) Document Creation: Successfully creates DRI Depart documents with document_type 'dri_deport' and proper metadata structure containing all required fields (date, expediteur, expediteur_reference, expediteur_date, destinataire, objet). (2) Document Retrieval: New API endpoint /api/documents/dri-depart works perfectly with pagination support (page, limit, total, pages). (3) Data Validation: All metadata fields are stored correctly and retrieved properly. (4) Reference Generation: DRI Depart documents get proper reference numbers in DRI-2025-XXX format with correct increment. (5) File Upload: File upload functionality works perfectly with DRI Depart documents, storing files in dri_depart folder with proper metadata. (6) CRUD Operations: All Create, Read, Update, Delete operations work flawlessly for DRI Depart documents. (7) Permissions: Role-based access control working properly (admin can access all, users can access their own). Fixed critical routing issue where DRI Depart endpoints were being overridden by generic document routes - moved DRI routes before generic routes to ensure proper matching. Backend is fully ready for frontend integration."
+
 frontend:
   - task: "UI Layout and Navigation"
     implemented: true
