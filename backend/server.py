@@ -828,6 +828,290 @@ async def get_employee_by_matricule(
         "service": employee['service']
     }
 
+# File Manager Routes
+@api_router.get("/file-manager/folders")
+async def get_folders(
+    parent_id: Optional[str] = Query(None),
+    current_user: User = Depends(get_current_user)
+):
+    """Get folders and files in a specific directory"""
+    query = {"parent_id": parent_id}
+    
+    # Get folders
+    folders = await db.folders.find(query).sort("name", 1).to_list(100)
+    
+    # Get files in this directory
+    file_query = {"folder_id": parent_id}
+    files = await db.file_items.find(file_query).sort("name", 1).to_list(100)
+    
+    # Get user information for folders
+    for folder in folders:
+        user = await db.users.find_one({"id": folder["created_by"]})
+        folder["created_by_name"] = user["full_name"] if user else "Unknown"
+    
+    return {
+        "folders": [Folder(**folder) for folder in folders],
+        "files": [FileItem(**file) for file in files],
+        "current_path": await get_folder_path(parent_id) if parent_id else "/"
+    }
+
+@api_router.post("/file-manager/folders", response_model=Folder)
+async def create_folder(
+    folder_data: FolderCreate,
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new folder"""
+    # Check if folder name already exists in the same parent
+    existing_folder = await db.folders.find_one({
+        "name": folder_data.name,
+        "parent_id": folder_data.parent_id
+    })
+    
+    if existing_folder:
+        raise HTTPException(status_code=400, detail="Folder with this name already exists")
+    
+    # Build the full path
+    parent_path = await get_folder_path(folder_data.parent_id) if folder_data.parent_id else ""
+    full_path = f"{parent_path}/{folder_data.name}".replace("//", "/")
+    
+    folder = Folder(
+        name=folder_data.name,
+        parent_id=folder_data.parent_id,
+        path=full_path,
+        created_by=current_user.id
+    )
+    
+    await db.folders.insert_one(folder.dict())
+    return folder
+
+@api_router.put("/file-manager/folders/{folder_id}", response_model=Folder)
+async def update_folder(
+    folder_id: str,
+    folder_data: FolderUpdate,
+    current_user: User = Depends(get_current_user)
+):
+    """Update folder name"""
+    folder = await db.folders.find_one({"id": folder_id})
+    if not folder:
+        raise HTTPException(status_code=404, detail="Folder not found")
+    
+    # Check permissions
+    if folder["created_by"] != current_user.id and current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this folder")
+    
+    # Check if new name already exists in the same parent
+    existing_folder = await db.folders.find_one({
+        "name": folder_data.name,
+        "parent_id": folder["parent_id"],
+        "id": {"$ne": folder_id}
+    })
+    
+    if existing_folder:
+        raise HTTPException(status_code=400, detail="Folder with this name already exists")
+    
+    # Update folder name and path
+    parent_path = await get_folder_path(folder["parent_id"]) if folder["parent_id"] else ""
+    new_full_path = f"{parent_path}/{folder_data.name}".replace("//", "/")
+    
+    update_data = {
+        "name": folder_data.name,
+        "path": new_full_path,
+        "updated_at": datetime.utcnow()
+    }
+    
+    await db.folders.update_one({"id": folder_id}, {"$set": update_data})
+    
+    # Update paths of all subfolders recursively
+    await update_subfolder_paths(folder_id, new_full_path)
+    
+    updated_folder = await db.folders.find_one({"id": folder_id})
+    return Folder(**updated_folder)
+
+@api_router.delete("/file-manager/folders/{folder_id}")
+async def delete_folder(
+    folder_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Delete folder and all its contents"""
+    folder = await db.folders.find_one({"id": folder_id})
+    if not folder:
+        raise HTTPException(status_code=404, detail="Folder not found")
+    
+    # Check permissions
+    if folder["created_by"] != current_user.id and current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this folder")
+    
+    # Delete all files in this folder and subfolders
+    await delete_folder_contents(folder_id)
+    
+    # Delete the folder itself
+    await db.folders.delete_one({"id": folder_id})
+    
+    return {"message": "Folder deleted successfully"}
+
+@api_router.post("/file-manager/upload")
+async def upload_files_to_folder(
+    folder_id: Optional[str] = Form(None),
+    files: List[UploadFile] = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """Upload files to a specific folder"""
+    # Verify folder exists if specified
+    if folder_id:
+        folder = await db.folders.find_one({"id": folder_id})
+        if not folder:
+            raise HTTPException(status_code=404, detail="Folder not found")
+    
+    upload_folder = get_upload_folder('file_manager')
+    uploaded_files = []
+    
+    for file in files:
+        # Check file size (10MB limit per file)
+        content = await file.read()
+        if len(content) > 10 * 1024 * 1024:  # 10MB
+            raise HTTPException(status_code=400, detail=f"File {file.filename} is too large (max 10MB)")
+        
+        # Create unique filename
+        file_extension = file.filename.split(".")[-1] if "." in file.filename else ""
+        unique_filename = f"fm_{uuid.uuid4()}.{file_extension}"
+        file_path = upload_folder / unique_filename
+        
+        # Save file
+        async with aiofiles.open(file_path, 'wb') as f:
+            await f.write(content)
+        
+        # Create file item record
+        file_item = FileItem(
+            name=file.filename,
+            original_name=file.filename,
+            file_path=str(file_path),
+            folder_id=folder_id,
+            file_size=len(content),
+            mime_type=file.content_type or "application/octet-stream",
+            created_by=current_user.id,
+            uploaded_by_name=current_user.full_name
+        )
+        
+        await db.file_items.insert_one(file_item.dict())
+        uploaded_files.append(file_item)
+    
+    return {
+        "message": f"Successfully uploaded {len(uploaded_files)} file(s)",
+        "files": [file.dict() for file in uploaded_files]
+    }
+
+@api_router.delete("/file-manager/files/{file_id}")
+async def delete_file(
+    file_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Delete a file"""
+    file_item = await db.file_items.find_one({"id": file_id})
+    if not file_item:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Check permissions
+    if file_item["created_by"] != current_user.id and current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this file")
+    
+    # Delete physical file
+    if os.path.exists(file_item["file_path"]):
+        os.remove(file_item["file_path"])
+    
+    # Delete database record
+    await db.file_items.delete_one({"id": file_id})
+    
+    return {"message": "File deleted successfully"}
+
+@api_router.get("/file-manager/download/{file_id}")
+async def download_file(
+    file_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Download a file"""
+    file_item = await db.file_items.find_one({"id": file_id})
+    if not file_item:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    if not os.path.exists(file_item["file_path"]):
+        raise HTTPException(status_code=404, detail="Physical file not found")
+    
+    from fastapi.responses import FileResponse
+    return FileResponse(
+        path=file_item["file_path"],
+        filename=file_item["original_name"],
+        media_type=file_item["mime_type"]
+    )
+
+@api_router.get("/file-manager/search")
+async def search_files_and_folders(
+    query: str = Query(..., min_length=1),
+    current_user: User = Depends(get_current_user)
+):
+    """Search files and folders by name"""
+    # Search folders
+    folders = await db.folders.find({
+        "name": {"$regex": query, "$options": "i"}
+    }).to_list(50)
+    
+    # Search files
+    files = await db.file_items.find({
+        "$or": [
+            {"name": {"$regex": query, "$options": "i"}},
+            {"original_name": {"$regex": query, "$options": "i"}}
+        ]
+    }).to_list(50)
+    
+    # Add creator names
+    for folder in folders:
+        user = await db.users.find_one({"id": folder["created_by"]})
+        folder["created_by_name"] = user["full_name"] if user else "Unknown"
+    
+    return {
+        "folders": [Folder(**folder) for folder in folders],
+        "files": [FileItem(**file) for file in files]
+    }
+
+# Helper functions for folder operations
+async def get_folder_path(folder_id: Optional[str]) -> str:
+    """Get the full path of a folder"""
+    if not folder_id:
+        return ""
+    
+    folder = await db.folders.find_one({"id": folder_id})
+    if not folder:
+        return ""
+    
+    return folder["path"]
+
+async def update_subfolder_paths(parent_folder_id: str, new_parent_path: str):
+    """Recursively update paths of all subfolders"""
+    subfolders = await db.folders.find({"parent_id": parent_folder_id}).to_list(100)
+    
+    for subfolder in subfolders:
+        new_path = f"{new_parent_path}/{subfolder['name']}"
+        await db.folders.update_one(
+            {"id": subfolder["id"]},
+            {"$set": {"path": new_path, "updated_at": datetime.utcnow()}}
+        )
+        # Recursively update subfolders
+        await update_subfolder_paths(subfolder["id"], new_path)
+
+async def delete_folder_contents(folder_id: str):
+    """Recursively delete all contents of a folder"""
+    # Delete all files in this folder
+    files = await db.file_items.find({"folder_id": folder_id}).to_list(100)
+    for file in files:
+        if os.path.exists(file["file_path"]):
+            os.remove(file["file_path"])
+    await db.file_items.delete_many({"folder_id": folder_id})
+    
+    # Recursively delete subfolders
+    subfolders = await db.folders.find({"parent_id": folder_id}).to_list(100)
+    for subfolder in subfolders:
+        await delete_folder_contents(subfolder["id"])
+        await db.folders.delete_one({"id": subfolder["id"]})
+
 # Users Management Routes (Admin only)
 @api_router.get("/users", response_model=List[User])
 async def get_users(admin_user: User = Depends(get_admin_user)):
