@@ -209,7 +209,7 @@ const DRIDepartViewModal = ({ document, isOpen, onClose }) => {
                               className="p-2 text-indigo-600 hover:bg-indigo-100 rounded-full transition-colors"
                               title="Télécharger"
                             >
-                              <i className="fas fa-download"></i>
+                              <ArrowDownTrayIcon className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
