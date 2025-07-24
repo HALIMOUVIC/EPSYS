@@ -20,6 +20,7 @@ import {
 
 const Sidebar = () => {
   const { user, logout, isAdmin } = useAuth();
+  const { t, isRTL } = useLanguage();
   const location = useLocation();
 
   const navigationItems = [
