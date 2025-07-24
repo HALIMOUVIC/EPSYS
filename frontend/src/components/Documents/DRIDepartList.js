@@ -126,9 +126,11 @@ const DRIDepartList = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+      
+      ModernAlert.success('Téléchargement', `Fichier "${originalName}" téléchargé avec succès`);
     } catch (error) {
       console.error('Error downloading file:', error);
-      alert('Erreur lors du téléchargement du fichier');
+      ModernAlert.error('Erreur', 'Erreur lors du téléchargement du fichier');
     }
   };
 
