@@ -250,6 +250,9 @@ const AppContent = () => {
         {/* Catch all route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+
+      {/* Modern Alert Container */}
+      <ModernAlertContainer />
     </Router>
   );
 };
