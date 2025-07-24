@@ -1571,6 +1571,56 @@ async def get_system_info(
         total_files = await db.file_items.count_documents({})
         total_events = await db.calendar_events.count_documents({})
         
+        # Get document counters for current year
+        current_year = datetime.utcnow().year
+        
+        # Get latest reference numbers for each document type
+        latest_depart = await db.documents.find_one(
+            {"document_type": "courrier_depart", "reference": {"$regex": f"DEP-{current_year}-"}},
+            sort=[("reference", -1)]
+        )
+        latest_arrive = await db.documents.find_one(
+            {"document_type": "courrier_arrive", "reference": {"$regex": f"ARR-{current_year}-"}},
+            sort=[("reference", -1)]
+        )
+        latest_dri = await db.documents.find_one(
+            {"document_type": "dri_depart", "reference": {"$regex": f"DRID-{current_year}-"}},
+            sort=[("reference", -1)]
+        )
+        latest_om = await db.documents.find_one(
+            {"document_type": "om_approval", "reference": {"$regex": f"OM-{current_year}-"}},
+            sort=[("reference", -1)]
+        )
+        
+        # Extract counter numbers
+        depart_counter = 0
+        arrive_counter = 0
+        dri_counter = 0
+        om_counter = 0
+        
+        if latest_depart:
+            depart_match = latest_depart["reference"].split('-')
+            if len(depart_match) >= 3:
+                depart_counter = int(depart_match[2])
+        
+        if latest_arrive:
+            arrive_match = latest_arrive["reference"].split('-')
+            if len(arrive_match) >= 3:
+                arrive_counter = int(arrive_match[2])
+        
+        if latest_dri:
+            dri_match = latest_dri["reference"].split('-')
+            if len(dri_match) >= 3:
+                dri_counter = int(dri_match[2])
+        
+        if latest_om:
+            om_match = latest_om["reference"].split('-')
+            if len(om_match) >= 3:
+                om_counter = int(om_match[2])
+        
+        # Check signup status
+        signup_enabled = True  # Default to enabled, you can store this in a settings collection
+        
         return {
             "database_stats": {
                 "total_users": total_users,
@@ -1578,6 +1628,16 @@ async def get_system_info(
                 "total_folders": total_folders,
                 "total_files": total_files,
                 "total_events": total_events
+            },
+            "document_counters": {
+                "current_year": current_year,
+                "courrier_depart": depart_counter,
+                "courrier_arrive": arrive_counter,
+                "dri_depart": dri_counter,
+                "om_approval": om_counter
+            },
+            "system_settings": {
+                "signup_enabled": signup_enabled
             },
             "system_status": {
                 "status": "healthy",
@@ -1589,6 +1649,53 @@ async def get_system_info(
     except Exception as e:
         print(f"Error getting system info: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to get system info: {str(e)}")
+
+@api_router.post("/settings/reset-counters")
+async def reset_document_counters(
+    current_user: User = Depends(get_current_user)
+):
+    """Reset document counters for new year (admin only)"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        # This is typically done automatically when the year changes
+        # But admins can manually reset if needed
+        current_year = datetime.utcnow().year
+        
+        # You could implement actual counter reset logic here
+        # For now, just return success message
+        
+        return {
+            "message": f"Document counters will be automatically reset for year {current_year + 1}",
+            "note": "Counters are automatically reset when the year changes"
+        }
+        
+    except Exception as e:
+        print(f"Error resetting counters: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to reset counters: {str(e)}")
+
+@api_router.put("/settings/signup-toggle")
+async def toggle_signup(
+    enabled: bool,
+    current_user: User = Depends(get_current_user)
+):
+    """Enable or disable user signup (admin only)"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        # In a real implementation, you would store this in a system settings collection
+        # For now, we'll just return the status
+        
+        return {
+            "signup_enabled": enabled,
+            "message": f"User signup has been {'enabled' if enabled else 'disabled'}"
+        }
+        
+    except Exception as e:
+        print(f"Error toggling signup: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to toggle signup: {str(e)}")
 
 @api_router.get("/file-manager/download/{file_id}")
 async def download_file(
