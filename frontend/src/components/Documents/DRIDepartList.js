@@ -93,7 +93,7 @@ const DRIDepartList = () => {
 
   const downloadFile = async (filePath, originalName) => {
     try {
-      const response = await axios.get(`/api/documents/download/${encodeURIComponent(filePath)}`, {
+      const response = await axios.get(`/documents/download/${encodeURIComponent(filePath)}`, {
         responseType: 'blob'
       });
       
