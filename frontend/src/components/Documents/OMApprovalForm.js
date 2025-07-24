@@ -504,19 +504,27 @@ const OMApprovalForm = ({ onClose, onSave }) => {
               onChange={handleChange}
               readOnly
               className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none"
+              placeholder="Nom sera rempli automatiquement"
             />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Matricule *</label>
-            <input
-              type="text"
-              name="matricule"
-              value={formData.matricule}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="Numéro de matricule"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                name="matricule"
+                value={formData.matricule}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Saisir le matricule"
+              />
+              {employeeLoading && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+                </div>
+              )}
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Date</label>
