@@ -726,7 +726,7 @@ const FileManager = () => {
         </div>
       )}
 
-      {/* Enhanced Edit Folder Modal */}
+      {/* Edit Folder Modal */}
       {showEditFolder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl">
@@ -762,6 +762,145 @@ const FileManager = () => {
               >
                 Renommer
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rename File Modal */}
+      {showRenameFile && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            <div className="flex items-center mb-6">
+              <div className="bg-green-100 p-3 rounded-lg mr-4">
+                <PencilIcon className="w-6 h-6 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900">Renommer le fichier</h3>
+            </div>
+            <input
+              type="text"
+              placeholder="Nouveau nom du fichier"
+              value={newFileName}
+              onChange={(e) => setNewFileName(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent mb-6 transition-colors"
+              onKeyPress={(e) => e.key === 'Enter' && renameFile()}
+            />
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowRenameFile(false);
+                  setNewFileName('');
+                  setRenamingFile(null);
+                }}
+                className="px-6 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={renameFile}
+                disabled={!newFileName.trim()}
+                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
+              >
+                Renommer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* File Preview Modal */}
+      {showPreview && previewData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl w-full max-w-4xl h-5/6 mx-4 shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b">
+              <div className="flex items-center">
+                <div className="bg-blue-100 p-3 rounded-lg mr-4">
+                  <EyeIcon className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">Aperçu du fichier</h3>
+                  <p className="text-gray-600">{previewData.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowPreview(false);
+                  setPreviewData(null);
+                  setPreviewFile(null);
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <XMarkIcon className="w-6 h-6 text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="flex-1 p-6 overflow-auto">
+              {previewData.preview_type === 'text' && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <pre className="whitespace-pre-wrap text-sm font-mono text-gray-800">
+                    {previewData.content}
+                  </pre>
+                </div>
+              )}
+              
+              {previewData.preview_type === 'image' && (
+                <div className="flex items-center justify-center h-full">
+                  <img
+                    src={`${backendUrl}${previewData.file_url}`}
+                    alt={previewData.name}
+                    className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                  />
+                </div>
+              )}
+              
+              {previewData.preview_type === 'pdf' && (
+                <div className="h-full">
+                  <iframe
+                    src={`${backendUrl}${previewData.file_url}`}
+                    className="w-full h-full rounded-lg border"
+                    title={`Preview of ${previewData.name}`}
+                  />
+                </div>
+              )}
+              
+              {(previewData.preview_type === 'office' || previewData.preview_type === 'unknown') && (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div className="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mb-6">
+                    <DocumentIcon className="w-12 h-12 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Aperçu non disponible</h3>
+                  <p className="text-gray-600 mb-6 max-w-md">
+                    {previewData.message}
+                  </p>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => downloadFile(previewFile)}
+                      className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                      <ArrowDownTrayIcon className="w-5 h-5 mr-2" />
+                      Télécharger le fichier
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-6 border-t bg-gray-50 rounded-b-xl">
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <div className="flex items-center space-x-4">
+                  <span>Taille: {formatFileSize(previewData.file_size)}</span>
+                  <span>Type: {previewData.mime_type}</span>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => downloadFile(previewFile)}
+                    className="inline-flex items-center px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                  >
+                    <ArrowDownTrayIcon className="w-4 h-4 mr-1" />
+                    Télécharger
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
