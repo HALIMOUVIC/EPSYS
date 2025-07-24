@@ -25,7 +25,7 @@ const Sidebar = () => {
     { name: 'Courrier Départ', href: '/outgoing-mail', icon: PaperAirplaneIcon },
     { name: 'Courrier Arrivé', href: '/incoming-mail', icon: InboxIcon },
     { name: 'Approbation OM', href: '/om-approval', icon: DocumentCheckIcon },
-    { name: 'DRI Déport', href: '/dri-deport', icon: ChartBarIcon },
+    { name: 'DRI Départ', href: '/dri-depart', icon: ChartBarIcon },
     { name: 'File Manager', href: '/file-manager', icon: FolderIcon },
     { name: 'Messages', href: '/messages', icon: ChatBubbleLeftIcon },
     { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
