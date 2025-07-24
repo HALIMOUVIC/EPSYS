@@ -217,10 +217,13 @@ const CourrierArriveeList = () => {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Documents Table */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800">Liste des Courriers Arrivés</h3>
+        <div className="p-6 bg-gradient-to-r from-green-600 to-emerald-600 border-b border-green-800">
+          <h3 className="text-xl font-bold text-white flex items-center">
+            <i className="fas fa-inbox mr-3 text-green-200"></i>
+            Liste des Courriers Arrivés
+          </h3>
         </div>
         
         <div className="overflow-x-auto">
