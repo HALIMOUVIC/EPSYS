@@ -124,6 +124,17 @@ const AppContent = () => {
         />
 
         <Route
+          path="/dri-depart"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <DRIDepartList />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/om-approval"
           element={
             <ProtectedRoute>
