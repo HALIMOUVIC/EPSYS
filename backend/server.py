@@ -160,6 +160,35 @@ class Employee(BaseModel):
     service: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+class Folder(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    parent_id: Optional[str] = None  # Root folders have None
+    path: str  # Full path like /folder1/subfolder2
+    created_by: str  # user_id
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class FolderCreate(BaseModel):
+    name: str
+    parent_id: Optional[str] = None
+
+class FolderUpdate(BaseModel):
+    name: str
+
+class FileItem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    original_name: str
+    file_path: str
+    folder_id: Optional[str] = None  # Root files have None
+    file_size: int
+    mime_type: str
+    created_by: str  # user_id
+    uploaded_by_name: str  # user full name for display
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
 # Utility Functions
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
