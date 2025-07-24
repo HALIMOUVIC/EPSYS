@@ -2934,5 +2934,378 @@ def run_all_tests():
     finally:
         results.summary()
 
+def test_settings_system_preferences():
+    """Test Settings System Preferences - PRIMARY TEST FOCUS"""
+    print("\n⚙️ Testing Settings System Preferences (PRIMARY FOCUS)...")
+    
+    # Test 1: Get initial settings (should create defaults)
+    print("\n  Testing settings retrieval with defaults...")
+    response = make_request("GET", "/settings", auth_token=user_token)
+    if response and response.status_code == 200:
+        settings = response.json()
+        required_fields = ["language", "timezone", "date_format", "theme", "full_name", "email"]
+        
+        if all(field in settings for field in required_fields):
+            results.log_success("Settings - Initial settings retrieval with defaults")
+            
+            # Verify default values
+            if (settings.get("language") == "fr" and 
+                settings.get("timezone") == "Europe/Paris" and
+                settings.get("date_format") == "DD/MM/YYYY" and
+                settings.get("theme") == "light"):
+                results.log_success("Settings - Default system preferences values")
+            else:
+                results.log_failure("Settings - Default values", f"Incorrect defaults: {settings}")
+        else:
+            results.log_failure("Settings - Initial settings", f"Missing required fields: {required_fields}")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings - Initial settings retrieval", error_msg)
+    
+    # Test 2: Language changes (fr, en, es, ar)
+    print("\n  Testing language changes...")
+    languages = ["en", "es", "ar", "fr"]  # Test different languages
+    
+    for lang in languages:
+        update_data = {"language": lang}
+        response = make_request("PUT", "/settings", update_data, auth_token=user_token)
+        
+        if response and response.status_code == 200:
+            updated_settings = response.json()
+            if updated_settings.get("language") == lang:
+                results.log_success(f"Settings - Language change to {lang}")
+            else:
+                results.log_failure(f"Settings - Language change to {lang}", "Language not updated correctly")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure(f"Settings - Language change to {lang}", error_msg)
+    
+    # Test 3: Theme changes (light, dark, auto)
+    print("\n  Testing theme changes...")
+    themes = ["dark", "auto", "light"]
+    
+    for theme in themes:
+        update_data = {"theme": theme}
+        response = make_request("PUT", "/settings", update_data, auth_token=user_token)
+        
+        if response and response.status_code == 200:
+            updated_settings = response.json()
+            if updated_settings.get("theme") == theme:
+                results.log_success(f"Settings - Theme change to {theme}")
+            else:
+                results.log_failure(f"Settings - Theme change to {theme}", "Theme not updated correctly")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure(f"Settings - Theme change to {theme}", error_msg)
+    
+    # Test 4: Timezone changes
+    print("\n  Testing timezone changes...")
+    timezones = ["America/New_York", "Asia/Tokyo", "Europe/London", "Europe/Paris"]
+    
+    for timezone in timezones:
+        update_data = {"timezone": timezone}
+        response = make_request("PUT", "/settings", update_data, auth_token=user_token)
+        
+        if response and response.status_code == 200:
+            updated_settings = response.json()
+            if updated_settings.get("timezone") == timezone:
+                results.log_success(f"Settings - Timezone change to {timezone}")
+            else:
+                results.log_failure(f"Settings - Timezone change to {timezone}", "Timezone not updated correctly")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure(f"Settings - Timezone change to {timezone}", error_msg)
+    
+    # Test 5: Date format changes
+    print("\n  Testing date format changes...")
+    date_formats = ["MM/DD/YYYY", "YYYY-MM-DD", "DD-MM-YYYY", "DD/MM/YYYY"]
+    
+    for date_format in date_formats:
+        update_data = {"date_format": date_format}
+        response = make_request("PUT", "/settings", update_data, auth_token=user_token)
+        
+        if response and response.status_code == 200:
+            updated_settings = response.json()
+            if updated_settings.get("date_format") == date_format:
+                results.log_success(f"Settings - Date format change to {date_format}")
+            else:
+                results.log_failure(f"Settings - Date format change to {date_format}", "Date format not updated correctly")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure(f"Settings - Date format change to {date_format}", error_msg)
+    
+    # Test 6: Settings persistence verification
+    print("\n  Testing settings persistence...")
+    response = make_request("GET", "/settings", auth_token=user_token)
+    if response and response.status_code == 200:
+        settings = response.json()
+        # Should have the last values we set
+        if (settings.get("language") == "fr" and 
+            settings.get("theme") == "light" and
+            settings.get("timezone") == "Europe/Paris" and
+            settings.get("date_format") == "DD/MM/YYYY"):
+            results.log_success("Settings - Settings persistence verification")
+        else:
+            results.log_failure("Settings - Settings persistence", f"Settings not persisted correctly: {settings}")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings - Settings persistence", error_msg)
+
+def test_signup_toggle_functionality():
+    """Test Signup Toggle Functionality - PRIMARY TEST FOCUS"""
+    print("\n🔐 Testing Signup Toggle Functionality (PRIMARY FOCUS)...")
+    
+    # Test 1: Admin can access signup toggle endpoint
+    print("\n  Testing admin access to signup toggle...")
+    response = make_request("PUT", "/settings/signup-toggle", {"enabled": True}, auth_token=admin_token)
+    if response and response.status_code == 200:
+        data = response.json()
+        if "signup_enabled" in data and data["signup_enabled"] == True:
+            results.log_success("Settings - Admin can enable signup")
+        else:
+            results.log_failure("Settings - Admin signup enable", "Invalid response format")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings - Admin signup enable", error_msg)
+    
+    # Test 2: Admin can disable signup
+    print("\n  Testing admin disable signup...")
+    response = make_request("PUT", "/settings/signup-toggle", {"enabled": False}, auth_token=admin_token)
+    if response and response.status_code == 200:
+        data = response.json()
+        if "signup_enabled" in data and data["signup_enabled"] == False:
+            results.log_success("Settings - Admin can disable signup")
+        else:
+            results.log_failure("Settings - Admin signup disable", "Invalid response format")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Settings - Admin signup disable", error_msg)
+    
+    # Test 3: Regular user cannot access signup toggle (should get 403)
+    print("\n  Testing user denied access to signup toggle...")
+    response = make_request("PUT", "/settings/signup-toggle", {"enabled": True}, auth_token=user_token)
+    if response and response.status_code == 403:
+        results.log_success("Settings - User denied access to signup toggle")
+    else:
+        error_detail = f"Status: {response.status_code if response else 'None'}"
+        results.log_failure("Settings - User signup toggle denial", f"Should deny access to non-admin - {error_detail}")
+    
+    # Test 4: Test with both enabled=true and enabled=false parameters
+    print("\n  Testing signup toggle with different parameters...")
+    test_cases = [
+        {"enabled": True, "expected": True},
+        {"enabled": False, "expected": False},
+        {"enabled": True, "expected": True}
+    ]
+    
+    for i, test_case in enumerate(test_cases):
+        response = make_request("PUT", "/settings/signup-toggle", {"enabled": test_case["enabled"]}, auth_token=admin_token)
+        if response and response.status_code == 200:
+            data = response.json()
+            if data.get("signup_enabled") == test_case["expected"]:
+                results.log_success(f"Settings - Signup toggle parameter test {i+1}")
+            else:
+                results.log_failure(f"Settings - Signup toggle parameter test {i+1}", f"Expected {test_case['expected']}, got {data.get('signup_enabled')}")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure(f"Settings - Signup toggle parameter test {i+1}", error_msg)
+    
+    # Test 5: Verify signup toggle without authentication (should fail)
+    print("\n  Testing signup toggle without authentication...")
+    response = make_request("PUT", "/settings/signup-toggle", {"enabled": True})
+    if response and response.status_code in [401, 403]:
+        results.log_success("Settings - Signup toggle requires authentication")
+    else:
+        error_detail = f"Status: {response.status_code if response else 'None'}"
+        results.log_failure("Settings - Signup toggle auth requirement", f"Should require authentication - {error_detail}")
+
+def test_profile_settings_integration():
+    """Test Profile Settings Integration - PRIMARY TEST FOCUS"""
+    print("\n👤 Testing Profile Settings Integration (PRIMARY FOCUS)...")
+    
+    # Test 1: Profile visibility settings (public, internal, private)
+    print("\n  Testing profile visibility settings...")
+    visibility_options = ["public", "internal", "private"]
+    
+    for visibility in visibility_options:
+        update_data = {"profile_visibility": visibility}
+        response = make_request("PUT", "/settings", update_data, auth_token=user_token)
+        
+        if response and response.status_code == 200:
+            updated_settings = response.json()
+            if updated_settings.get("profile_visibility") == visibility:
+                results.log_success(f"Profile - Visibility setting to {visibility}")
+            else:
+                results.log_failure(f"Profile - Visibility setting to {visibility}", "Visibility not updated correctly")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure(f"Profile - Visibility setting to {visibility}", error_msg)
+    
+    # Test 2: Show online status toggle
+    print("\n  Testing show online status toggle...")
+    online_status_options = [True, False, True]
+    
+    for status in online_status_options:
+        update_data = {"show_online_status": status}
+        response = make_request("PUT", "/settings", update_data, auth_token=user_token)
+        
+        if response and response.status_code == 200:
+            updated_settings = response.json()
+            if updated_settings.get("show_online_status") == status:
+                results.log_success(f"Profile - Online status toggle to {status}")
+            else:
+                results.log_failure(f"Profile - Online status toggle to {status}", "Online status not updated correctly")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure(f"Profile - Online status toggle to {status}", error_msg)
+    
+    # Test 3: Avatar URL updates (base64)
+    print("\n  Testing avatar URL updates...")
+    # Simulate base64 encoded image data
+    base64_avatar = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+    
+    update_data = {"avatar_url": base64_avatar}
+    response = make_request("PUT", "/settings", update_data, auth_token=user_token)
+    
+    if response and response.status_code == 200:
+        updated_settings = response.json()
+        if updated_settings.get("avatar_url") == base64_avatar:
+            results.log_success("Profile - Avatar URL update (base64)")
+        else:
+            results.log_failure("Profile - Avatar URL update", "Avatar URL not updated correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Profile - Avatar URL update", error_msg)
+    
+    # Test 4: Personal information updates (full_name, phone, bio)
+    print("\n  Testing personal information updates...")
+    personal_info_updates = [
+        {"full_name": "Jean-Pierre Dubois", "phone": "+33 1 23 45 67 89", "bio": "Ingénieur logiciel spécialisé en systèmes de gestion documentaire"},
+        {"full_name": "Marie-Claire Martin", "phone": "+213 21 123 456", "bio": "Responsable qualité et processus métier"},
+        {"full_name": "Ahmed Ben Ali", "phone": "+1 555 123 4567", "bio": "Expert en transformation digitale et innovation technologique"}
+    ]
+    
+    for i, update_data in enumerate(personal_info_updates):
+        response = make_request("PUT", "/settings", update_data, auth_token=user_token)
+        
+        if response and response.status_code == 200:
+            updated_settings = response.json()
+            if (updated_settings.get("full_name") == update_data["full_name"] and
+                updated_settings.get("phone") == update_data["phone"] and
+                updated_settings.get("bio") == update_data["bio"]):
+                results.log_success(f"Profile - Personal info update test {i+1}")
+            else:
+                results.log_failure(f"Profile - Personal info update test {i+1}", "Personal information not updated correctly")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure(f"Profile - Personal info update test {i+1}", error_msg)
+    
+    # Test 5: Combined profile settings update
+    print("\n  Testing combined profile settings update...")
+    combined_update = {
+        "full_name": "Fatima Benali",
+        "phone": "+213 555 987 654",
+        "bio": "Directrice des opérations - Spécialiste en gestion de projets industriels",
+        "profile_visibility": "internal",
+        "show_online_status": False,
+        "language": "fr",
+        "theme": "dark"
+    }
+    
+    response = make_request("PUT", "/settings", combined_update, auth_token=user_token)
+    
+    if response and response.status_code == 200:
+        updated_settings = response.json()
+        all_updated = all(
+            updated_settings.get(key) == value 
+            for key, value in combined_update.items()
+        )
+        
+        if all_updated:
+            results.log_success("Profile - Combined profile settings update")
+        else:
+            results.log_failure("Profile - Combined settings update", "Not all settings updated correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Profile - Combined settings update", error_msg)
+    
+    # Test 6: Profile settings persistence verification
+    print("\n  Testing profile settings persistence...")
+    response = make_request("GET", "/settings", auth_token=user_token)
+    if response and response.status_code == 200:
+        settings = response.json()
+        # Verify the last combined update persisted
+        if (settings.get("full_name") == "Fatima Benali" and
+            settings.get("phone") == "+213 555 987 654" and
+            settings.get("profile_visibility") == "internal" and
+            settings.get("show_online_status") == False):
+            results.log_success("Profile - Profile settings persistence")
+        else:
+            results.log_failure("Profile - Settings persistence", f"Profile settings not persisted correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Profile - Settings persistence", error_msg)
+    
+    # Test 7: Test admin user profile settings (different user context)
+    print("\n  Testing admin user profile settings...")
+    admin_profile_update = {
+        "full_name": "Sarah Johnson - Administrator",
+        "phone": "+1 555 999 8888",
+        "bio": "System Administrator - EPSys Document Management Platform",
+        "profile_visibility": "public",
+        "show_online_status": True
+    }
+    
+    response = make_request("PUT", "/settings", admin_profile_update, auth_token=admin_token)
+    
+    if response and response.status_code == 200:
+        updated_settings = response.json()
+        if updated_settings.get("full_name") == admin_profile_update["full_name"]:
+            results.log_success("Profile - Admin user profile settings")
+        else:
+            results.log_failure("Profile - Admin profile settings", "Admin profile not updated correctly")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("Profile - Admin profile settings", error_msg)
+
+def main():
+    """Run all backend tests with focus on PRIMARY TEST AREAS"""
+    print("🚀 Starting EPSys Backend API Tests...")
+    print(f"Backend URL: {BACKEND_URL}")
+    print("="*60)
+    print("🎯 PRIMARY TEST FOCUS: Settings System Preferences, Signup Toggle, Profile Settings")
+    print("="*60)
+    
+    try:
+        # Essential setup tests
+        test_user_registration()
+        test_user_login()
+        
+        # PRIMARY TEST FOCUS - The three main areas from review request
+        print("\n" + "="*60)
+        print("🎯 STARTING PRIMARY TEST FOCUS AREAS")
+        print("="*60)
+        
+        test_settings_system_preferences()
+        test_signup_toggle_functionality()
+        test_profile_settings_integration()
+        
+        print("\n" + "="*60)
+        print("✅ PRIMARY TEST FOCUS COMPLETED")
+        print("="*60)
+        
+        # Additional verification tests
+        test_protected_endpoints()
+        test_dashboard_statistics()
+        
+    except KeyboardInterrupt:
+        print("\n\n⚠️ Tests interrupted by user")
+    except Exception as e:
+        print(f"\n\n💥 Unexpected error during testing: {str(e)}")
+        results.log_failure("Test execution", str(e))
+    
+    finally:
+        results.summary()
+
 if __name__ == "__main__":
-    run_all_tests()
+    main()
