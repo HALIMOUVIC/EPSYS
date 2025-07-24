@@ -356,7 +356,7 @@ const OMApprovalList = () => {
               setTimeout(() => {
                 printWindow.close();
               }, 1000);
-            };
+            }, 500);
           };
         } else {
           // Fallback: create a blob and download  
