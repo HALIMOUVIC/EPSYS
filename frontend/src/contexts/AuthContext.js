@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import SessionExpiredModal from '../components/Common/SessionExpiredModal';
 
 const AuthContext = createContext();
 
