@@ -70,8 +70,16 @@ const DRIDepartViewModal = ({ document, isOpen, onClose }) => {
       console.log('Attempting to preview file:', file.original_name);
       console.log('File path:', file.file_path);
       
+      // Extract relative path from absolute path if needed
+      let relativePath = file.file_path;
+      if (file.file_path.includes('/uploads/')) {
+        relativePath = file.file_path.split('/uploads/')[1];
+      }
+      
+      console.log('Using relative path for preview:', relativePath);
+      
       // Use the same endpoint pattern as download function
-      const response = await axios.get(`/documents/download/${encodeURIComponent(file.file_path)}`, {
+      const response = await axios.get(`/documents/download/${encodeURIComponent(relativePath)}`, {
         responseType: 'blob'
       });
       
