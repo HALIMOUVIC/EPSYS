@@ -48,7 +48,7 @@ const DRIDepartForm = ({ onClose, onSuccess }) => {
         formDataToSend.append('files', file);
       });
 
-      await axios.post('/api/documents/dri-depart', formDataToSend, {
+      await axios.post('/documents/dri-depart', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
