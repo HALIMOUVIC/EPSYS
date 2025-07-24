@@ -189,6 +189,104 @@ class FileItem(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+class CalendarEvent(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    description: Optional[str] = None
+    start_date: datetime
+    end_date: datetime
+    all_day: bool = False
+    color: str = "#3b82f6"  # Default blue color
+    created_by: str  # user_id
+    created_by_name: str  # user full name for display
+    attendees: List[str] = []  # List of user emails or names
+    location: Optional[str] = None
+    reminder_minutes: int = 15  # Minutes before event to remind
+    category: str = "general"  # general, meeting, deadline, holiday, etc.
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class CalendarEventCreate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=200)
+    description: Optional[str] = None
+    start_date: datetime
+    end_date: datetime
+    all_day: bool = False
+    color: str = "#3b82f6"
+    attendees: List[str] = []
+    location: Optional[str] = None
+    reminder_minutes: int = 15
+    category: str = "general"
+
+class CalendarEventUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    all_day: Optional[bool] = None
+    color: Optional[str] = None
+    attendees: Optional[List[str]] = None
+    location: Optional[str] = None
+    reminder_minutes: Optional[int] = None
+    category: Optional[str] = None
+
+class UserSettings(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    # Profile settings
+    full_name: str
+    email: str
+    phone: Optional[str] = None
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
+    # Notification settings
+    email_notifications: bool = True
+    push_notifications: bool = False
+    document_update_notifications: bool = True
+    message_notifications: bool = True
+    calendar_reminders: bool = True
+    # Security settings
+    two_factor_enabled: bool = False
+    session_timeout_minutes: int = 30
+    password_change_required: bool = False
+    # System preferences
+    language: str = "fr"
+    timezone: str = "Europe/Paris"
+    date_format: str = "DD/MM/YYYY"
+    theme: str = "light"  # light, dark, auto
+    # Privacy settings
+    profile_visibility: str = "internal"  # public, internal, private
+    show_online_status: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class UserSettingsUpdate(BaseModel):
+    # Profile settings
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    bio: Optional[str] = None
+    # Notification settings
+    email_notifications: Optional[bool] = None
+    push_notifications: Optional[bool] = None
+    document_update_notifications: Optional[bool] = None
+    message_notifications: Optional[bool] = None
+    calendar_reminders: Optional[bool] = None
+    # Security settings
+    two_factor_enabled: Optional[bool] = None
+    session_timeout_minutes: Optional[int] = None
+    # System preferences
+    language: Optional[str] = None
+    timezone: Optional[str] = None
+    date_format: Optional[str] = None
+    theme: Optional[str] = None
+    # Privacy settings
+    profile_visibility: Optional[str] = None
+    show_online_status: Optional[bool] = None
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(..., min_length=6)
+
 # Utility Functions
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
