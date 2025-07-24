@@ -57,6 +57,8 @@ const DRIDepartViewModal = ({ document, isOpen, onClose }) => {
 
   const handlePreview = async (file) => {
     try {
+      console.log('Attempting to preview file:', file.original_name);
+      
       const response = await fetch(`/api/documents/download/${encodeURIComponent(file.file_path)}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -66,14 +68,43 @@ const DRIDepartViewModal = ({ document, isOpen, onClose }) => {
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
+        
+        console.log('Preview URL created:', url);
+        console.log('File type:', blob.type);
+        
         setPreviewFile({
           name: file.original_name,
           url: url,
-          type: blob.type
+          type: blob.type || getContentType(file.original_name)
         });
+      } else {
+        console.error('Failed to fetch file for preview:', response.status);
+        alert('Erreur lors du chargement du fichier pour la prévisualisation');
       }
     } catch (error) {
       console.error('Error previewing file:', error);
+      alert('Erreur lors de la prévisualisation du fichier');
+    }
+  };
+
+  const getContentType = (filename) => {
+    const extension = filename.split('.').pop().toLowerCase();
+    switch (extension) {
+      case 'pdf':
+        return 'application/pdf';
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'gif':
+        return 'image/gif';
+      case 'txt':
+        return 'text/plain';
+      case 'md':
+        return 'text/markdown';
+      default:
+        return 'application/octet-stream';
     }
   };
 
