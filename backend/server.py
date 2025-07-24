@@ -877,11 +877,17 @@ async def get_folders(
                             })
         
         # Convert MongoDB documents to Pydantic models to handle ObjectId serialization
-        folder_models = [Folder(**folder) for folder in folders]
+        # But preserve the created_by_name field we just added
+        folder_dicts = []
+        for folder in folders:
+            folder_dict = Folder(**folder).dict()
+            folder_dict["created_by_name"] = folder.get("created_by_name", "Unknown")
+            folder_dicts.append(folder_dict)
+        
         file_models = [FileItem(**file) for file in files]
         
         return {
-            "folders": [folder.dict() for folder in folder_models],
+            "folders": folder_dicts,
             "files": [file.dict() for file in file_models],
             "current_path": current_path,
             "current_folder": Folder(**current_folder_info).dict() if current_folder_info else None,
