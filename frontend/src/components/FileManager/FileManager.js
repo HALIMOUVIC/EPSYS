@@ -256,6 +256,50 @@ const FileManager = () => {
     setShowEditFolder(true);
   };
 
+  const startRenameFile = (file) => {
+    setRenamingFile(file);
+    setNewFileName(file.name);
+    setShowRenameFile(true);
+  };
+
+  const renameFile = async () => {
+    if (!newFileName.trim() || !renamingFile) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('new_name', newFileName.trim());
+
+      const response = await axios.put(`${backendUrl}/api/file-manager/files/${renamingFile.id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      setFiles(files.map(f => f.id === renamingFile.id ? response.data : f));
+      setNewFileName('');
+      setShowRenameFile(false);
+      setRenamingFile(null);
+      showAlert('success', 'Succès', `Fichier renommé en "${newFileName.trim()}" avec succès`);
+    } catch (error) {
+      console.error('Failed to rename file:', error);
+      const errorMessage = error.response?.data?.detail || 'Échec du renommage du fichier';
+      showAlert('error', 'Erreur', errorMessage);
+    }
+  };
+
+  const previewFileHandler = async (file) => {
+    try {
+      setPreviewFile(file);
+      const response = await axios.get(`${backendUrl}/api/file-manager/preview/${file.id}`);
+      setPreviewData(response.data);
+      setShowPreview(true);
+    } catch (error) {
+      console.error('Failed to preview file:', error);
+      const errorMessage = error.response?.data?.detail || 'Échec de la prévisualisation du fichier';
+      showAlert('error', 'Erreur', errorMessage);
+    }
+  };
+
   const getFileIcon = (fileName) => {
     const extension = fileName.split('.').pop().toLowerCase();
     const iconClass = "w-8 h-8";
