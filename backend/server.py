@@ -882,7 +882,12 @@ async def create_folder(
     )
     
     await db.folders.insert_one(folder.dict())
-    return folder
+    
+    # Add created_by_name for frontend display
+    folder_dict = folder.dict()
+    folder_dict["created_by_name"] = current_user.full_name
+    
+    return folder_dict
 
 @api_router.put("/file-manager/folders/{folder_id}", response_model=Folder)
 async def update_folder(
