@@ -139,28 +139,41 @@ const Sidebar = () => {
           </div>
         </div>
 
-        {/* User Dropdown Menu */}
+        {/* User Dropdown Menu - Positioned closer with no gap */}
         {showUserMenu && (
           <div 
-            className="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-lg shadow-xl border py-2 z-50"
+            className="absolute bottom-0 left-4 right-4 mb-16 bg-white rounded-lg shadow-xl border py-1 z-50"
             onMouseEnter={() => setShowUserMenu(true)}
             onMouseLeave={() => setShowUserMenu(false)}
           >
             <NavLink
               to="/profile"
-              className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+              className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors text-sm"
+              onClick={() => setShowUserMenu(false)}
             >
               <UserIcon className="w-4 h-4" />
-              <span className="text-sm">{t('profile')}</span>
+              <span>{t('profile')}</span>
             </NavLink>
             <button
-              onClick={logout}
-              className="w-full flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+              onClick={() => {
+                setShowUserMenu(false);
+                logout();
+              }}
+              className="w-full flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors text-sm"
             >
               <ArrowRightOnRectangleIcon className="w-4 h-4" />
-              <span className="text-sm">{t('logout')}</span>
+              <span>{t('logout')}</span>
             </button>
           </div>
+        )}
+
+        {/* Invisible bridge to prevent menu hiding */}
+        {showUserMenu && (
+          <div 
+            className="absolute bottom-0 left-4 right-4 h-16 z-40"
+            onMouseEnter={() => setShowUserMenu(true)}
+            onMouseLeave={() => setShowUserMenu(false)}
+          />
         )}
       </div>
     </div>
