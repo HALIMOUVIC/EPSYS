@@ -1358,6 +1358,398 @@ def test_enhanced_file_manager():
     for file_id in created_files:
         make_request("DELETE", f"/file-manager/files/{file_id}", auth_token=admin_token)
 
+def test_file_manager_renaming():
+    """Test File Manager file renaming functionality"""
+    print("\n📝 Testing File Manager File Renaming...")
+    
+    # First, create a test file to rename
+    test_content = b"This is a test file for renaming functionality"
+    
+    with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as temp_file:
+        temp_file.write(test_content)
+        temp_file_path = temp_file.name
+    
+    file_id = None
+    try:
+        # Upload a test file
+        with open(temp_file_path, 'rb') as f:
+            files = [('files', ('original_test_file.txt', f, 'text/plain'))]
+            response = make_request("POST", "/file-manager/upload", files=files, auth_token=user_token)
+        
+        if response and response.status_code == 200:
+            upload_result = response.json()
+            if "files" in upload_result and len(upload_result["files"]) > 0:
+                file_id = upload_result["files"][0]["id"]
+                results.log_success("File Manager Rename - Test file upload")
+            else:
+                results.log_failure("File Manager Rename - Test file upload", "No files returned")
+                return
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("File Manager Rename - Test file upload", error_msg)
+            return
+    
+    finally:
+        os.unlink(temp_file_path)
+    
+    if not file_id:
+        results.log_failure("File Manager Rename", "Could not create test file")
+        return
+    
+    # Test 1: Rename file with valid new name
+    print("\n  Testing file rename with valid name...")
+    new_name = "renamed_test_file.txt"
+    rename_data = {'new_name': new_name}
+    
+    response = make_request("PUT", f"/file-manager/files/{file_id}", data=rename_data, auth_token=user_token)
+    if response and response.status_code == 200:
+        file_info = response.json()
+        if (file_info["name"] == new_name and 
+            file_info["original_name"] == new_name and
+            file_info["id"] == file_id):
+            results.log_success("File Manager Rename - Valid name rename")
+        else:
+            results.log_failure("File Manager Rename - Valid name", f"File not renamed correctly: {file_info}")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("File Manager Rename - Valid name", error_msg)
+    
+    # Test 2: Test error handling for empty names
+    print("\n  Testing rename with empty name...")
+    empty_name_data = {'new_name': ''}
+    
+    response = make_request("PUT", f"/file-manager/files/{file_id}", data=empty_name_data, auth_token=user_token)
+    if response and response.status_code == 400:
+        results.log_success("File Manager Rename - Empty name rejection")
+    else:
+        error_detail = f"Status: {response.status_code if response else 'None'}"
+        results.log_failure("File Manager Rename - Empty name", f"Should reject empty names - {error_detail}")
+    
+    # Test 3: Test error handling for whitespace-only names
+    print("\n  Testing rename with whitespace-only name...")
+    whitespace_name_data = {'new_name': '   '}
+    
+    response = make_request("PUT", f"/file-manager/files/{file_id}", data=whitespace_name_data, auth_token=user_token)
+    if response and response.status_code == 400:
+        results.log_success("File Manager Rename - Whitespace name rejection")
+    else:
+        error_detail = f"Status: {response.status_code if response else 'None'}"
+        results.log_failure("File Manager Rename - Whitespace name", f"Should reject whitespace-only names - {error_detail}")
+    
+    # Test 4: Test permission checks (create file as admin, try to rename as user)
+    print("\n  Testing rename permission checks...")
+    
+    # Create a file as admin
+    admin_test_content = b"This is an admin test file for permission testing"
+    
+    with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as admin_temp_file:
+        admin_temp_file.write(admin_test_content)
+        admin_temp_file_path = admin_temp_file.name
+    
+    admin_file_id = None
+    try:
+        with open(admin_temp_file_path, 'rb') as f:
+            files = [('files', ('admin_test_file.txt', f, 'text/plain'))]
+            response = make_request("POST", "/file-manager/upload", files=files, auth_token=admin_token)
+        
+        if response and response.status_code == 200:
+            upload_result = response.json()
+            if "files" in upload_result and len(upload_result["files"]) > 0:
+                admin_file_id = upload_result["files"][0]["id"]
+                
+                # Try to rename admin's file as regular user (should fail)
+                unauthorized_rename_data = {'new_name': 'hacked_file.txt'}
+                response = make_request("PUT", f"/file-manager/files/{admin_file_id}", 
+                                      data=unauthorized_rename_data, auth_token=user_token)
+                
+                if response and response.status_code == 403:
+                    results.log_success("File Manager Rename - Permission check (user cannot rename admin file)")
+                else:
+                    error_detail = f"Status: {response.status_code if response else 'None'}"
+                    results.log_failure("File Manager Rename - Permission check", f"Should deny unauthorized rename - {error_detail}")
+            
+    finally:
+        os.unlink(admin_temp_file_path)
+        # Clean up admin file
+        if admin_file_id:
+            make_request("DELETE", f"/file-manager/files/{admin_file_id}", auth_token=admin_token)
+    
+    # Test 5: Test that admin can rename any file
+    print("\n  Testing admin can rename any file...")
+    admin_rename_data = {'new_name': 'admin_renamed_file.txt'}
+    
+    response = make_request("PUT", f"/file-manager/files/{file_id}", data=admin_rename_data, auth_token=admin_token)
+    if response and response.status_code == 200:
+        file_info = response.json()
+        if file_info["name"] == "admin_renamed_file.txt":
+            results.log_success("File Manager Rename - Admin can rename any file")
+        else:
+            results.log_failure("File Manager Rename - Admin permission", "Admin rename failed")
+    else:
+        error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+        results.log_failure("File Manager Rename - Admin permission", error_msg)
+    
+    # Test 6: Test renaming non-existent file
+    print("\n  Testing rename non-existent file...")
+    fake_file_id = str(uuid.uuid4())
+    fake_rename_data = {'new_name': 'fake_file.txt'}
+    
+    response = make_request("PUT", f"/file-manager/files/{fake_file_id}", data=fake_rename_data, auth_token=user_token)
+    if response and response.status_code == 404:
+        results.log_success("File Manager Rename - Non-existent file handling")
+    else:
+        error_detail = f"Status: {response.status_code if response else 'None'}"
+        results.log_failure("File Manager Rename - Non-existent file", f"Should return 404 for non-existent file - {error_detail}")
+    
+    # Test 7: Verify response includes updated file information
+    print("\n  Testing response includes updated file information...")
+    final_rename_data = {'new_name': 'final_test_file.txt'}
+    
+    response = make_request("PUT", f"/file-manager/files/{file_id}", data=final_rename_data, auth_token=user_token)
+    if response and response.status_code == 200:
+        file_info = response.json()
+        required_fields = ["id", "name", "original_name", "file_path", "folder_id", "file_size", 
+                          "mime_type", "created_by", "uploaded_by_name", "created_at", "updated_at"]
+        
+        missing_fields = [field for field in required_fields if field not in file_info]
+        if not missing_fields:
+            results.log_success("File Manager Rename - Complete response structure")
+        else:
+            results.log_failure("File Manager Rename - Response structure", f"Missing fields: {missing_fields}")
+    
+    # Cleanup: Delete the test file
+    if file_id:
+        make_request("DELETE", f"/file-manager/files/{file_id}", auth_token=user_token)
+
+def test_file_manager_preview():
+    """Test File Manager file preview functionality"""
+    print("\n👁️ Testing File Manager File Preview...")
+    
+    # Create test files of different types
+    test_files = [
+        ("test_text.txt", b"This is a text file content for preview testing.\nLine 2 of the text file.\nLine 3 with special chars", "text/plain"),
+        ("test_image.jpg", b"\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00\xFF\xDB", "image/jpeg"),
+        ("test_pdf.pdf", b"%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog\n/Pages 2 0 R\n>>\nendobj", "application/pdf"),
+        ("test_doc.doc", b"\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1", "application/msword"),
+        ("test_excel.xlsx", b"PK\x03\x04", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+        ("test_json.json", b'{"name": "test", "value": 123, "array": [1, 2, 3]}', "application/json"),
+        ("test_csv.csv", b"Name,Age,City\nJohn,25,Paris\nJane,30,London", "text/csv"),
+        ("test_unknown.xyz", b"Unknown file type content", "application/octet-stream")
+    ]
+    
+    uploaded_file_ids = []
+    
+    # Upload all test files
+    print("\n  Uploading test files for preview testing...")
+    for filename, content, mime_type in test_files:
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file.write(content)
+            temp_file_path = temp_file.name
+        
+        try:
+            with open(temp_file_path, 'rb') as f:
+                files = [('files', (filename, f, mime_type))]
+                response = make_request("POST", "/file-manager/upload", files=files, auth_token=user_token)
+            
+            if response and response.status_code == 200:
+                upload_result = response.json()
+                if "files" in upload_result and len(upload_result["files"]) > 0:
+                    file_id = upload_result["files"][0]["id"]
+                    uploaded_file_ids.append((file_id, filename, mime_type))
+                    results.log_success(f"File Manager Preview - Upload {filename}")
+                else:
+                    results.log_failure(f"File Manager Preview - Upload {filename}", "No files returned")
+        
+        finally:
+            os.unlink(temp_file_path)
+    
+    if not uploaded_file_ids:
+        results.log_failure("File Manager Preview", "Could not upload any test files")
+        return
+    
+    # Test 1: Preview text files
+    print("\n  Testing text file preview...")
+    text_file_id = next((fid for fid, fname, _ in uploaded_file_ids if fname == "test_text.txt"), None)
+    if text_file_id:
+        response = make_request("GET", f"/file-manager/preview/{text_file_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            preview_data = response.json()
+            if (preview_data.get("preview_type") == "text" and 
+                "content" in preview_data and 
+                preview_data.get("can_preview") == True and
+                "This is a text file content" in preview_data["content"]):
+                results.log_success("File Manager Preview - Text file preview")
+            else:
+                results.log_failure("File Manager Preview - Text file", f"Invalid text preview: {preview_data}")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("File Manager Preview - Text file", error_msg)
+    
+    # Test 2: Preview JSON file (should be treated as text)
+    print("\n  Testing JSON file preview...")
+    json_file_id = next((fid for fid, fname, _ in uploaded_file_ids if fname == "test_json.json"), None)
+    if json_file_id:
+        response = make_request("GET", f"/file-manager/preview/{json_file_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            preview_data = response.json()
+            if (preview_data.get("preview_type") == "text" and 
+                "content" in preview_data and 
+                preview_data.get("can_preview") == True and
+                '"name": "test"' in preview_data["content"]):
+                results.log_success("File Manager Preview - JSON file preview")
+            else:
+                results.log_failure("File Manager Preview - JSON file", f"Invalid JSON preview: {preview_data}")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("File Manager Preview - JSON file", error_msg)
+    
+    # Test 3: Preview CSV file (should be treated as text)
+    print("\n  Testing CSV file preview...")
+    csv_file_id = next((fid for fid, fname, _ in uploaded_file_ids if fname == "test_csv.csv"), None)
+    if csv_file_id:
+        response = make_request("GET", f"/file-manager/preview/{csv_file_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            preview_data = response.json()
+            if (preview_data.get("preview_type") == "text" and 
+                "content" in preview_data and 
+                preview_data.get("can_preview") == True and
+                "Name,Age,City" in preview_data["content"]):
+                results.log_success("File Manager Preview - CSV file preview")
+            else:
+                results.log_failure("File Manager Preview - CSV file", f"Invalid CSV preview: {preview_data}")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("File Manager Preview - CSV file", error_msg)
+    
+    # Test 4: Preview image files
+    print("\n  Testing image file preview...")
+    image_file_id = next((fid for fid, fname, _ in uploaded_file_ids if fname == "test_image.jpg"), None)
+    if image_file_id:
+        response = make_request("GET", f"/file-manager/preview/{image_file_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            preview_data = response.json()
+            if (preview_data.get("preview_type") == "image" and 
+                "file_url" in preview_data and 
+                preview_data.get("can_preview") == True and
+                preview_data["file_url"] == f"/api/file-manager/download/{image_file_id}"):
+                results.log_success("File Manager Preview - Image file preview")
+            else:
+                results.log_failure("File Manager Preview - Image file", f"Invalid image preview: {preview_data}")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("File Manager Preview - Image file", error_msg)
+    
+    # Test 5: Preview PDF files
+    print("\n  Testing PDF file preview...")
+    pdf_file_id = next((fid for fid, fname, _ in uploaded_file_ids if fname == "test_pdf.pdf"), None)
+    if pdf_file_id:
+        response = make_request("GET", f"/file-manager/preview/{pdf_file_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            preview_data = response.json()
+            if (preview_data.get("preview_type") == "pdf" and 
+                "file_url" in preview_data and 
+                preview_data.get("can_preview") == True and
+                preview_data["file_url"] == f"/api/file-manager/download/{pdf_file_id}"):
+                results.log_success("File Manager Preview - PDF file preview")
+            else:
+                results.log_failure("File Manager Preview - PDF file", f"Invalid PDF preview: {preview_data}")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("File Manager Preview - PDF file", error_msg)
+    
+    # Test 6: Preview office documents (should have can_preview = false)
+    print("\n  Testing office document preview...")
+    doc_file_id = next((fid for fid, fname, _ in uploaded_file_ids if fname == "test_doc.doc"), None)
+    if doc_file_id:
+        response = make_request("GET", f"/file-manager/preview/{doc_file_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            preview_data = response.json()
+            if (preview_data.get("preview_type") == "office" and 
+                "file_url" in preview_data and 
+                preview_data.get("can_preview") == False and
+                "message" in preview_data):
+                results.log_success("File Manager Preview - Office document preview")
+            else:
+                results.log_failure("File Manager Preview - Office document", f"Invalid office preview: {preview_data}")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("File Manager Preview - Office document", error_msg)
+    
+    # Test 7: Preview Excel files (should have can_preview = false)
+    print("\n  Testing Excel file preview...")
+    excel_file_id = next((fid for fid, fname, _ in uploaded_file_ids if fname == "test_excel.xlsx"), None)
+    if excel_file_id:
+        response = make_request("GET", f"/file-manager/preview/{excel_file_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            preview_data = response.json()
+            if (preview_data.get("preview_type") == "office" and 
+                "file_url" in preview_data and 
+                preview_data.get("can_preview") == False and
+                "message" in preview_data):
+                results.log_success("File Manager Preview - Excel file preview")
+            else:
+                results.log_failure("File Manager Preview - Excel file", f"Invalid Excel preview: {preview_data}")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("File Manager Preview - Excel file", error_msg)
+    
+    # Test 8: Preview unknown file types
+    print("\n  Testing unknown file type preview...")
+    unknown_file_id = next((fid for fid, fname, _ in uploaded_file_ids if fname == "test_unknown.xyz"), None)
+    if unknown_file_id:
+        response = make_request("GET", f"/file-manager/preview/{unknown_file_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            preview_data = response.json()
+            if (preview_data.get("preview_type") == "unknown" and 
+                preview_data.get("can_preview") == False and
+                "message" in preview_data):
+                results.log_success("File Manager Preview - Unknown file type preview")
+            else:
+                results.log_failure("File Manager Preview - Unknown file type", f"Invalid unknown preview: {preview_data}")
+        else:
+            error_msg = response.json().get("detail", "Unknown error") if response else "Connection failed"
+            results.log_failure("File Manager Preview - Unknown file type", error_msg)
+    
+    # Test 9: Test error handling for non-existent files
+    print("\n  Testing preview non-existent file...")
+    fake_file_id = str(uuid.uuid4())
+    
+    response = make_request("GET", f"/file-manager/preview/{fake_file_id}", auth_token=user_token)
+    if response and response.status_code == 404:
+        results.log_success("File Manager Preview - Non-existent file handling")
+    else:
+        error_detail = f"Status: {response.status_code if response else 'None'}"
+        results.log_failure("File Manager Preview - Non-existent file", f"Should return 404 for non-existent file - {error_detail}")
+    
+    # Test 10: Verify response includes appropriate preview_type and content/file_url
+    print("\n  Testing response structure completeness...")
+    if uploaded_file_ids:
+        file_id, filename, _ = uploaded_file_ids[0]
+        response = make_request("GET", f"/file-manager/preview/{file_id}", auth_token=user_token)
+        if response and response.status_code == 200:
+            preview_data = response.json()
+            required_fields = ["file_id", "name", "file_size", "mime_type", "preview_type", "can_preview"]
+            
+            missing_fields = [field for field in required_fields if field not in preview_data]
+            if not missing_fields:
+                results.log_success("File Manager Preview - Complete response structure")
+            else:
+                results.log_failure("File Manager Preview - Response structure", f"Missing fields: {missing_fields}")
+            
+            # Check that either content or file_url is present based on preview type
+            preview_type = preview_data.get("preview_type")
+            if preview_type == "text" and "content" not in preview_data:
+                results.log_failure("File Manager Preview - Text content", "Text preview should include content field")
+            elif preview_type in ["image", "pdf", "office"] and "file_url" not in preview_data:
+                results.log_failure("File Manager Preview - File URL", f"{preview_type} preview should include file_url field")
+            else:
+                results.log_success("File Manager Preview - Appropriate content/file_url field")
+    
+    # Cleanup: Delete all test files
+    print("\n  Cleaning up test files...")
+    for file_id, filename, _ in uploaded_file_ids:
+        make_request("DELETE", f"/file-manager/files/{file_id}", auth_token=user_token)
+
 def run_all_tests():
     """Run all backend tests"""
     print("🚀 Starting EPSys Backend API Tests...")
