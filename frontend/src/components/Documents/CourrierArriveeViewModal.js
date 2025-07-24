@@ -169,7 +169,7 @@ const CourrierArriveeViewModal = ({ document, isOpen, onClose }) => {
                       <InboxIcon className="w-5 h-5 text-green-600" />
                       <label className="text-sm font-semibold text-gray-700">Référence</label>
                     </div>
-                    <p className="text-gray-900 font-medium">{document.reference}</p>
+                    <p className="text-gray-900 font-medium">{document.reference || `ARR-${new Date(document.created_at).getFullYear()}-${String(document.id).padStart(3, '0')}`}</p>
                   </div>
 
                   <div className="bg-gray-50 p-4 rounded-lg">
