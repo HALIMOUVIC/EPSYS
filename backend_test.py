@@ -875,11 +875,18 @@ def test_dri_depart_functionality():
         dri_depart_id2 = doc["id"]
         reference2 = doc.get("reference", "")
         
+        # Get the first document's reference for comparison
+        first_doc_reference = ""
+        if dri_depart_id:
+            first_response = make_request("GET", f"/documents/{dri_depart_id}", auth_token=user_token)
+            if first_response and first_response.status_code == 200:
+                first_doc_reference = first_response.json().get("reference", "")
+        
         # Verify reference increment
-        if reference2 and reference2 != (doc.get("reference") if dri_depart_id else ""):
+        if reference2 and first_doc_reference and reference2 != first_doc_reference:
             results.log_success("DRI Depart reference increment")
         else:
-            results.log_failure("DRI Depart reference increment", f"Reference not incremented: {reference2}")
+            results.log_failure("DRI Depart reference increment", f"Reference not incremented: {reference2} vs {first_doc_reference}")
     
     # Test 5: Update DRI Depart document
     if dri_depart_id:
