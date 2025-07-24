@@ -25,9 +25,14 @@ const DRIDepartViewModal = ({ document, isOpen, onClose }) => {
     }
   };
 
-  const downloadFile = async (filePath, originalName) => {
+  const canPreview = (filename) => {
+    const extension = filename.split('.').pop().toLowerCase();
+    return ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'txt', 'md'].includes(extension);
+  };
+
+  const handlePreview = async (file) => {
     try {
-      const response = await fetch(`/api/documents/download/${encodeURIComponent(filePath)}`, {
+      const response = await fetch(`/api/documents/download/${encodeURIComponent(file.file_path)}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
@@ -36,18 +41,22 @@ const DRIDepartViewModal = ({ document, isOpen, onClose }) => {
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', originalName);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(url);
+        setPreviewFile({
+          name: file.original_name,
+          url: url,
+          type: blob.type
+        });
       }
     } catch (error) {
-      console.error('Error downloading file:', error);
-      alert('Erreur lors du téléchargement du fichier');
+      console.error('Error previewing file:', error);
     }
+  };
+
+  const closePreview = () => {
+    if (previewFile?.url) {
+      window.URL.revokeObjectURL(previewFile.url);
+    }
+    setPreviewFile(null);
   };
 
   return (
