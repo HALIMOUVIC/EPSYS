@@ -13,7 +13,8 @@ import {
   CheckIcon,
   ExclamationTriangleIcon,
   EyeIcon,
-  EyeSlashIcon
+  EyeSlashIcon,
+  UserIcon
 } from '@heroicons/react/24/outline';
 
 const Settings = () => {
