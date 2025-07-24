@@ -67,23 +67,8 @@ const Sidebar = () => {
         </div>
       </div>
 
-      {/* User Info */}
-      <div className="p-4 border-b border-purple-600/30">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
-            <span className="text-white font-semibold text-sm">
-              {user?.full_name?.split(' ').map(n => n[0]).join('') || 'U'}
-            </span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-white font-medium truncate">{user?.full_name}</p>
-            <p className="text-purple-200 text-sm capitalize">{user?.role}</p>
-          </div>
-        </div>
-      </div>
-
       {/* Navigation */}
-      <nav className="p-4 space-y-2">
+      <nav className="p-4 space-y-2 flex-1">
         {navigationItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -133,18 +118,50 @@ const Sidebar = () => {
             })}
           </>
         )}
-
-        {/* Logout */}
-        <div className="pt-4">
-          <button
-            onClick={logout}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-purple-200 hover:bg-red-500/20 hover:text-red-200 transition-all duration-200"
-          >
-            <ArrowRightOnRectangleIcon className="w-5 h-5" />
-            <span className="font-medium">Logout</span>
-          </button>
-        </div>
       </nav>
+
+      {/* User Menu at Bottom */}
+      <div className="p-4 border-t border-purple-600/30 relative">
+        <div 
+          className="flex items-center space-x-3 px-4 py-3 rounded-lg text-purple-200 hover:bg-white/10 hover:text-white cursor-pointer transition-all duration-200"
+          onMouseEnter={() => setShowUserMenu(true)}
+          onMouseLeave={() => setShowUserMenu(false)}
+        >
+          <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+            <span className="text-white font-semibold text-sm">
+              {user?.full_name?.split(' ').map(n => n[0]).join('') || 'U'}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{user?.full_name}</p>
+            <p className="text-xs text-purple-300 capitalize">{user?.role}</p>
+          </div>
+        </div>
+
+        {/* User Dropdown Menu */}
+        {showUserMenu && (
+          <div 
+            className="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-lg shadow-xl border py-2 z-50"
+            onMouseEnter={() => setShowUserMenu(true)}
+            onMouseLeave={() => setShowUserMenu(false)}
+          >
+            <NavLink
+              to="/profile"
+              className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+            >
+              <UserIcon className="w-4 h-4" />
+              <span className="text-sm">{t('profile')}</span>
+            </NavLink>
+            <button
+              onClick={logout}
+              className="w-full flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+            >
+              <ArrowRightOnRectangleIcon className="w-4 h-4" />
+              <span className="text-sm">{t('logout')}</span>
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
