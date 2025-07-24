@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { XMarkIcon, DocumentTextIcon, UserIcon, CalendarIcon, PaperAirplaneIcon, BuildingOfficeIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, DocumentTextIcon, UserIcon, CalendarIcon, PaperAirplaneIcon, BuildingOfficeIcon, EyeIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
 const DRIDepartViewModal = ({ document, isOpen, onClose }) => {
   const [previewFile, setPreviewFile] = useState(null);
