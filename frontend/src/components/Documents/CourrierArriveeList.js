@@ -17,11 +17,15 @@ import {
 import { ModernAlert } from '../Common/ModernAlert';
 
 const CourrierArriveeList = () => {
+  const { user } = useAuth();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingDocument, setEditingDocument] = useState(null);
+  const [viewingDocument, setViewingDocument] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
 
   useEffect(() => {
     fetchDocuments();
