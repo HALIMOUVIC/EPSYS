@@ -112,6 +112,11 @@ const Settings = () => {
       changeLanguage(value);
     }
     
+    // Handle session timeout update
+    if (key === 'session_timeout_minutes') {
+      updateSessionTimeout(parseInt(value));
+    }
+    
     // Update local state immediately for better UX
     setSettings({...settings, [key]: value});
     
