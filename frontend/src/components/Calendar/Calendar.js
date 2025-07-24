@@ -568,14 +568,27 @@ const Calendar = () => {
                     {hourEvents.map(event => (
                       <div
                         key={event.id}
-                        className="text-sm p-2 mb-1 rounded cursor-pointer hover:opacity-80"
+                        className="text-sm p-2 mb-1 rounded cursor-pointer hover:opacity-80 group relative"
                         style={{ backgroundColor: event.color + '20', color: event.color, borderLeft: `3px solid ${event.color}` }}
                         onClick={(e) => {
                           e.stopPropagation();
                           openEventModal(null, event);
                         }}
                       >
-                        {event.title}
+                        <div className="flex items-center justify-between">
+                          <span className="truncate flex-1">{event.title}</span>
+                          {(event.created_by === user?.id || user?.role === 'admin') && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteEvent(event);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 rounded transition-all ml-1"
+                            >
+                              <TrashIcon className="w-3 h-3 text-red-600" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
