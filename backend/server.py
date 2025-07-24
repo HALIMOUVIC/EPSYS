@@ -929,7 +929,7 @@ async def create_folder(
         "updated_at": folder.updated_at
     }
 
-@api_router.put("/file-manager/folders/{folder_id}", response_model=Folder)
+@api_router.put("/file-manager/folders/{folder_id}")
 async def update_folder(
     folder_id: str,
     folder_data: FolderUpdate,
@@ -973,9 +973,17 @@ async def update_folder(
     
     # Add created_by_name for frontend display
     user = await db.users.find_one({"id": updated_folder["created_by"]})
-    updated_folder["created_by_name"] = user["full_name"] if user else "Unknown"
     
-    return Folder(**updated_folder)
+    return {
+        "id": updated_folder["id"],
+        "name": updated_folder["name"],
+        "parent_id": updated_folder["parent_id"],
+        "path": updated_folder["path"],
+        "created_by": updated_folder["created_by"],
+        "created_by_name": user["full_name"] if user else "Unknown",
+        "created_at": updated_folder["created_at"],
+        "updated_at": updated_folder["updated_at"]
+    }
 
 @api_router.delete("/file-manager/folders/{folder_id}")
 async def delete_folder(
