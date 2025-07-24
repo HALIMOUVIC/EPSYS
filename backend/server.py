@@ -1321,6 +1321,275 @@ async def preview_file(
         "message": "Preview not available for this file type. Click download to view the file."
     }
 
+# Calendar Management Routes
+@api_router.get("/calendar/events")
+async def get_calendar_events(
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    current_user: User = Depends(get_current_user)
+):
+    """Get calendar events for a date range"""
+    try:
+        query = {}
+        
+        # Add date filters if provided
+        if start_date and end_date:
+            start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            query["$or"] = [
+                {
+                    "start_date": {"$lte": end_dt},
+                    "end_date": {"$gte": start_dt}
+                }
+            ]
+        
+        events = await db.calendar_events.find(query).sort("start_date", 1).to_list(1000)
+        
+        return {
+            "events": [CalendarEvent(**event).dict() for event in events]
+        }
+        
+    except Exception as e:
+        print(f"Error in get_calendar_events: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to load calendar events: {str(e)}")
+
+@api_router.post("/calendar/events")
+async def create_calendar_event(
+    event_data: CalendarEventCreate,
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new calendar event"""
+    try:
+        # Validate dates
+        if event_data.end_date <= event_data.start_date:
+            raise HTTPException(status_code=400, detail="End date must be after start date")
+        
+        event = CalendarEvent(
+            title=event_data.title,
+            description=event_data.description,
+            start_date=event_data.start_date,
+            end_date=event_data.end_date,
+            all_day=event_data.all_day,
+            color=event_data.color,
+            created_by=current_user.id,
+            created_by_name=current_user.full_name,
+            attendees=event_data.attendees,
+            location=event_data.location,
+            reminder_minutes=event_data.reminder_minutes,
+            category=event_data.category
+        )
+        
+        await db.calendar_events.insert_one(event.dict())
+        
+        return event.dict()
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error creating calendar event: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create calendar event: {str(e)}")
+
+@api_router.put("/calendar/events/{event_id}")
+async def update_calendar_event(
+    event_id: str,
+    event_data: CalendarEventUpdate,
+    current_user: User = Depends(get_current_user)
+):
+    """Update a calendar event"""
+    try:
+        event = await db.calendar_events.find_one({"id": event_id})
+        if not event:
+            raise HTTPException(status_code=404, detail="Event not found")
+        
+        # Check permissions
+        if event["created_by"] != current_user.id and current_user.role != UserRole.ADMIN:
+            raise HTTPException(status_code=403, detail="Not authorized to edit this event")
+        
+        # Build update data
+        update_data = {"updated_at": datetime.utcnow()}
+        for field, value in event_data.dict(exclude_unset=True).items():
+            if value is not None:
+                update_data[field] = value
+        
+        # Validate dates if both are being updated
+        if "start_date" in update_data and "end_date" in update_data:
+            if update_data["end_date"] <= update_data["start_date"]:
+                raise HTTPException(status_code=400, detail="End date must be after start date")
+        
+        await db.calendar_events.update_one({"id": event_id}, {"$set": update_data})
+        
+        updated_event = await db.calendar_events.find_one({"id": event_id})
+        return CalendarEvent(**updated_event).dict()
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating calendar event: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update calendar event: {str(e)}")
+
+@api_router.delete("/calendar/events/{event_id}")
+async def delete_calendar_event(
+    event_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Delete a calendar event"""
+    try:
+        event = await db.calendar_events.find_one({"id": event_id})
+        if not event:
+            raise HTTPException(status_code=404, detail="Event not found")
+        
+        # Check permissions
+        if event["created_by"] != current_user.id and current_user.role != UserRole.ADMIN:
+            raise HTTPException(status_code=403, detail="Not authorized to delete this event")
+        
+        await db.calendar_events.delete_one({"id": event_id})
+        
+        return {"message": "Event deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error deleting calendar event: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete calendar event: {str(e)}")
+
+# User Settings Routes
+@api_router.get("/settings")
+async def get_user_settings(
+    current_user: User = Depends(get_current_user)
+):
+    """Get user settings"""
+    try:
+        settings = await db.user_settings.find_one({"user_id": current_user.id})
+        
+        if not settings:
+            # Create default settings for new user
+            default_settings = UserSettings(
+                user_id=current_user.id,
+                full_name=current_user.full_name,
+                email=current_user.email
+            )
+            await db.user_settings.insert_one(default_settings.dict())
+            return default_settings.dict()
+        
+        return UserSettings(**settings).dict()
+        
+    except Exception as e:
+        print(f"Error getting user settings: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to load user settings: {str(e)}")
+
+@api_router.put("/settings")
+async def update_user_settings(
+    settings_data: UserSettingsUpdate,
+    current_user: User = Depends(get_current_user)
+):
+    """Update user settings"""
+    try:
+        # Check if settings exist
+        existing_settings = await db.user_settings.find_one({"user_id": current_user.id})
+        
+        if not existing_settings:
+            # Create new settings if they don't exist
+            new_settings = UserSettings(
+                user_id=current_user.id,
+                full_name=current_user.full_name,
+                email=current_user.email
+            )
+            # Apply updates
+            for field, value in settings_data.dict(exclude_unset=True).items():
+                if value is not None:
+                    setattr(new_settings, field, value)
+            
+            await db.user_settings.insert_one(new_settings.dict())
+            return new_settings.dict()
+        else:
+            # Update existing settings
+            update_data = {"updated_at": datetime.utcnow()}
+            for field, value in settings_data.dict(exclude_unset=True).items():
+                if value is not None:
+                    update_data[field] = value
+            
+            await db.user_settings.update_one(
+                {"user_id": current_user.id},
+                {"$set": update_data}
+            )
+            
+            updated_settings = await db.user_settings.find_one({"user_id": current_user.id})
+            return UserSettings(**updated_settings).dict()
+        
+    except Exception as e:
+        print(f"Error updating user settings: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update user settings: {str(e)}")
+
+@api_router.post("/settings/change-password")
+async def change_password(
+    password_data: PasswordChangeRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Change user password"""
+    try:
+        # Verify current password
+        user = await db.users.find_one({"id": current_user.id})
+        if not user or not pwd_context.verify(password_data.current_password, user["password"]):
+            raise HTTPException(status_code=400, detail="Current password is incorrect")
+        
+        # Hash new password
+        hashed_password = pwd_context.hash(password_data.new_password)
+        
+        # Update password
+        await db.users.update_one(
+            {"id": current_user.id},
+            {"$set": {"password": hashed_password, "updated_at": datetime.utcnow()}}
+        )
+        
+        # Update settings to mark password change as completed
+        await db.user_settings.update_one(
+            {"user_id": current_user.id},
+            {"$set": {"password_change_required": False, "updated_at": datetime.utcnow()}}
+        )
+        
+        return {"message": "Password changed successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error changing password: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to change password: {str(e)}")
+
+@api_router.get("/settings/system-info")
+async def get_system_info(
+    current_user: User = Depends(get_current_user)
+):
+    """Get system information (admin only)"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        # Get database stats
+        total_users = await db.users.count_documents({})
+        total_documents = await db.documents.count_documents({})
+        total_folders = await db.folders.count_documents({})
+        total_files = await db.file_items.count_documents({})
+        total_events = await db.calendar_events.count_documents({})
+        
+        return {
+            "database_stats": {
+                "total_users": total_users,
+                "total_documents": total_documents,
+                "total_folders": total_folders,
+                "total_files": total_files,
+                "total_events": total_events
+            },
+            "system_status": {
+                "status": "healthy",
+                "uptime": "Available",
+                "version": "1.0.0"
+            }
+        }
+        
+    except Exception as e:
+        print(f"Error getting system info: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get system info: {str(e)}")
+
 @api_router.get("/file-manager/download/{file_id}")
 async def download_file(
     file_id: str,
