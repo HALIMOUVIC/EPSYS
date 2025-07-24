@@ -62,75 +62,308 @@ const OMApprovalList = () => {
 
   const handleReprint = (document) => {
     if (document.metadata) {
-      // Regenerate printable document
+      // Regenerate printable document using the exact same template
       const printContent = `
         <!DOCTYPE html>
-        <html>
+        <html lang="fr">
           <head>
-            <title>Ordre de Mission</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Ordre de Mission Interne</title>
             <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              .header { text-align: center; margin-bottom: 30px; }
-              .content { margin: 20px 0; }
-              .field { margin: 10px 0; }
-              .label { font-weight: bold; }
-              .signature-section { margin-top: 50px; display: flex; justify-content: space-between; }
-              .signature-box { width: 200px; text-align: center; }
-              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-              td { padding: 10px; border: 1px solid #ccc; }
+              body {
+                margin: 0;
+                padding: 20px;
+                font-family: Arial, sans-serif;
+                font-size: 12px;
+                line-height: 1.4;
+              }
+              
+              .a4 {
+                width: 210mm;
+                min-height: 297mm;
+                margin: 0 auto;
+                padding: 20px;
+                box-sizing: border-box;
+              }
+              
+              .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 30px;
+                border-bottom: 2px solid #000;
+                padding-bottom: 15px;
+              }
+              
+              .logo {
+                width: 80px;
+                height: 80px;
+                object-fit: contain;
+              }
+              
+              .header-text {
+                flex: 1;
+                text-align: left;
+                margin-left: 20px;
+              }
+              
+              .linelft {
+                margin: 2px 0;
+                font-weight: bold;
+                font-size: 11px;
+              }
+              
+              .direct-text {
+                text-align: right;
+              }
+              
+              .direct-text h3 {
+                margin: 0;
+                font-size: 14px;
+              }
+              
+              .ftntbl {
+                white-space: nowrap;
+                vertical-align: middle;
+                padding-right: 5px;
+                font-weight: bold;
+              }
+              
+              .blueTable {
+                width: 100%;
+                table-layout: fixed;
+                border-collapse: collapse;
+                margin: 20px 0;
+              }
+              
+              .blueTable td {
+                vertical-align: middle;
+                padding: 8px 4px;
+                border: 1px solid #000;
+                font-size: 11px;
+              }
+              
+              .blueTable td:first-child {
+                width: 20%;
+                background-color: #f0f0f0;
+              }
+              
+              .blueTable td:nth-child(2) {
+                width: 40%;
+              }
+              
+              .blueTable td:nth-child(3) {
+                width: 20%;
+                background-color: #f0f0f0;
+              }
+              
+              .blueTable td:nth-child(4) {
+                width: 20%;
+              }
+              
+              .action-row .action-label {
+                vertical-align: top;
+                padding-top: 4px;
+              }
+              
+              .blueTable2 {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+              }
+              
+              .blueTable2 th,
+              .blueTable2 td {
+                border: 1px solid #000;
+                padding: 20px 10px;
+                text-align: center;
+                font-weight: bold;
+                font-size: 11px;
+              }
+              
+              .blueTable2 thead th {
+                background-color: #f0f0f0;
+                padding: 10px;
+              }
+              
+              .blueTable2 tbody th {
+                height: 60px;
+              }
+              
+              .PRF {
+                margin-top: 30px;
+                font-size: 10px;
+              }
+              
+              .PRF u {
+                font-weight: bold;
+              }
+              
+              .PRF p {
+                margin: 10px 0;
+                text-align: justify;
+              }
+              
+              @media print {
+                body { margin: 0; }
+                .a4 { margin: 0; padding: 15mm; }
+              }
             </style>
           </head>
           <body>
-            <div class="header">
-              <h2>ORDRE DE MISSION</h2>
-              <p>Date: ${new Date(document.metadata.date).toLocaleDateString('fr-FR')}</p>
-            </div>
-            
-            <table>
-              <tr>
-                <td class="label">Monsieur:</td>
-                <td>${document.metadata.fullName}</td>
-                <td class="label">Matricule:</td>
-                <td>${document.metadata.matricule}</td>
-              </tr>
-              <tr>
-                <td class="label">Fonction:</td>
-                <td>${document.metadata.jobTitle}</td>
-                <td class="label">Structure:</td>
-                <td>${document.metadata.division}</td>
-              </tr>
-              <tr>
-                <td class="label">Itinéraire:</td>
-                <td colspan="3">${document.metadata.itineraire}</td>
-              </tr>
-              <tr>
-                <td class="label">Date de Départ:</td>
-                <td>${new Date(document.metadata.dateDepart).toLocaleDateString('fr-FR')}</td>
-                <td class="label">Date de Retour:</td>
-                <td>${new Date(document.metadata.dateRetour).toLocaleDateString('fr-FR')}</td>
-              </tr>
-              <tr>
-                <td class="label">Transport:</td>
-                <td colspan="3">${document.metadata.transport}</td>
-              </tr>
-              <tr>
-                <td class="label">Action à réaliser:</td>
-                <td colspan="3">${document.metadata.objet}</td>
-              </tr>
-            </table>
-            
-            <div class="signature-section">
-              <div class="signature-box">
-                <p>Le Demandeur</p>
-                <br><br><br>
-                <p>_________________</p>
+            <div class="a4">
+              <div class="header">
+                <div style="width: 80px; height: 80px; border: 2px solid #000; display: flex; align-items: center; justify-content: center; font-weight: bold;">LOGO</div>
+                <div class="header-text">
+                  <div class="linelft">Activité Exploration-Production</div>
+                  <div class="linelft">Division Production</div>
+                  <div class="linelft">Direction Regionale In Amenas</div>
+                  <div class="linelft">Division .......ENP...</div>
+                </div>
+                <div class="direct-text">
+                  <h3><strong>Monsieur le Directeur Régional</strong></h3>
+                </div>
               </div>
-              <div class="signature-box">
-                <p>Le Responsable</p>
-                <br><br><br>
-                <p>_________________</p>
+              
+              <br><br><br><br>
+              
+              <div>
+                <h4><u>Objet:</u><span> Demande d'approbation de départ en mission</span></h4>
+              </div>
+              
+              <div class="content">
+                <table class="blueTable">
+                  <tbody>
+                    <tr>
+                      <td class="ftntbl">Monsieur :</td>
+                      <td>${document.metadata.fullName}</td>
+                      <td class="ftntbl">Matricule :</td>
+                      <td>${document.metadata.matricule}</td>
+                    </tr>
+                    <tr>
+                      <td class="ftntbl">Fonction :</td>
+                      <td>${document.metadata.jobTitle}</td>
+                      <td>&nbsp;</td>
+                      <td>&nbsp;</td>
+                    </tr>
+                    <tr>
+                      <td class="ftntbl">Structure :</td>
+                      <td>${document.metadata.division}</td>
+                      <td>&nbsp;</td>
+                      <td>&nbsp;</td>
+                    </tr>
+                    <tr>
+                      <td class="ftntbl">Itinéraire :</td>
+                      <td>${document.metadata.itineraire}</td>
+                      <td>&nbsp;</td>
+                      <td>&nbsp;</td>
+                    </tr>
+                    <tr>
+                      <td class="ftntbl">Mission :</td>
+                      <td>du&nbsp;<span>${new Date(document.metadata.dateDepart).toLocaleDateString('fr-FR')}</span>&nbsp;au&nbsp;<span>${new Date(document.metadata.dateRetour).toLocaleDateString('fr-FR')}</span></td>
+                      <td>&nbsp;</td>
+                      <td>&nbsp;</td>
+                    </tr>
+                    <tr>
+                      <td class="ftntbl">Transport :</td>
+                      <td>${document.metadata.transport}</td>
+                      <td>&nbsp;</td>
+                      <td>&nbsp;</td>
+                    </tr>
+                    <tr class="action-row">
+                      <td class="ftntbl action-label">Action à réaliser :</td>
+                      <td colspan="3">
+                        ${(() => {
+                          const text = document.metadata.objet;
+                          const words = text.split(' ');
+                          const firstLine = [];
+                          const secondLine = [];
+                          let charCount = 0;
+                          
+                          // Approximately determine first line (adjust number as needed)
+                          words.forEach(word => {
+                            if(charCount < 60) { // Approximate character limit for first line
+                              firstLine.push(word);
+                              charCount += word.length + 1;
+                            } else {
+                              secondLine.push(word);
+                            }
+                          });
+                          
+                          let result = firstLine.join(' ');
+                          if(secondLine.length > 0) {
+                            result += '<br>' + secondLine.join(' ');
+                          }
+                          return result;
+                        })()}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                
+                <br>
+                
+                <table class="blueTable2">
+                  <thead>
+                    <tr>
+                      <th>Le Chef de Division EP</th>
+                      <th>Avis de Monsieur Le Directeur Régional</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th><span></span></th>
+                      <th><span></span></th>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <th><span class="ftntbl">Date :</span><span>${new Date().toLocaleDateString('fr-FR')}</span></th>
+                      <th><span></span></th>
+                    </tr>
+                  </tfoot>
+                </table>
+                
+                <br>
+                
+                <div class="PRF">
+                  <span><u>NB</u></span>
+                  <p>Toute demande doit être adressée à la Direction Régionale soixante-douze (72) heures à l'avance sauf cas express.</p>
+                  <br><br>
+                  <p>(*) Enumérer les actions à réaliser lors de la mission.</p>
+                </div>
               </div>
             </div>
+
+            <script>
+              window.addEventListener('beforeprint', function() {
+                const footer = document.createElement('div');
+                footer.style.position = 'fixed';
+                footer.style.bottom = '30px';
+                footer.style.right = '35px';
+                footer.style.fontSize = '8px';
+                footer.style.color = '#000';
+                footer.style.margin = '0';
+                footer.style.textAlign = 'right';
+                footer.innerText = 'Approbation Printed by ENP Application @2025';
+                document.body.appendChild(footer);
+              });
+
+              window.addEventListener('afterprint', function() {
+                const footer = document.querySelector('div[style*="position: fixed"]');
+                if (footer) {
+                  document.body.removeChild(footer);
+                }
+              });
+              
+              // Auto print when document loads
+              window.onload = function() {
+                setTimeout(() => {
+                  window.print();
+                }, 500);
+              };
+            </script>
           </body>
         </html>
       `;
@@ -146,10 +379,10 @@ const OMApprovalList = () => {
       doc.close();
 
       iframe.onload = function() {
-        iframe.contentWindow.print();
+        // The print will be triggered by the script in the iframe
         setTimeout(() => {
           document.body.removeChild(iframe);
-        }, 1000);
+        }, 2000);
       };
     }
   };
