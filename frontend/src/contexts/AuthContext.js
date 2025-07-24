@@ -180,6 +180,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     setUser(null);
+    setLastActivity(Date.now());
   };
 
   const value = {
@@ -188,6 +189,9 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     loading,
+    updateSessionTimeout,
+    sessionTimeout,
+    lastActivity,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin'
   };
