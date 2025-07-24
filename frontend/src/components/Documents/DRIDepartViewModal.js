@@ -54,32 +54,33 @@ const DRIDepartViewModal = ({ document, isOpen, onClose }) => {
   const handlePreview = async (file) => {
     try {
       console.log('Attempting to preview file:', file.original_name);
+      console.log('File path:', file.file_path);
       
-      const response = await fetch(`/api/documents/download/${encodeURIComponent(file.file_path)}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
+      // Use the same endpoint pattern as download function
+      const response = await axios.get(`/documents/download/${encodeURIComponent(file.file_path)}`, {
+        responseType: 'blob'
       });
       
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        
-        console.log('Preview URL created:', url);
-        console.log('File type:', blob.type);
-        
-        setPreviewFile({
-          name: file.original_name,
-          url: url,
-          type: blob.type || getContentType(file.original_name)
-        });
-      } else {
-        console.error('Failed to fetch file for preview:', response.status);
-        alert('Erreur lors du chargement du fichier pour la prévisualisation');
-      }
+      console.log('Preview response received:', response.status);
+      
+      const blob = new Blob([response.data]);
+      const url = window.URL.createObjectURL(blob);
+      
+      console.log('Preview URL created:', url);
+      console.log('Blob type:', blob.type);
+      
+      setPreviewFile({
+        name: file.original_name,
+        url: url,
+        type: blob.type || getContentType(file.original_name)
+      });
+      
+      console.log('Preview file state set successfully');
+      
     } catch (error) {
       console.error('Error previewing file:', error);
-      alert('Erreur lors de la prévisualisation du fichier');
+      console.error('Error details:', error.response?.data || error.message);
+      alert('Erreur lors du chargement du fichier pour la prévisualisation');
     }
   };
 
