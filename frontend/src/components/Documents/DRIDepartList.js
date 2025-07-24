@@ -305,18 +305,25 @@ const DRIDepartList = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center space-x-2">
                         <button
+                          onClick={() => handleView(document)}
+                          className="text-blue-600 hover:text-white bg-blue-100 hover:bg-blue-600 p-2 rounded-full transition-all duration-300 transform hover:scale-110 shadow-sm hover:shadow-md"
+                          title="Voir les détails"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => handleEdit(document)}
                           className="text-indigo-600 hover:text-white bg-indigo-100 hover:bg-indigo-600 p-2 rounded-full transition-all duration-300 transform hover:scale-110 shadow-sm hover:shadow-md"
                           title="Modifier ce courrier"
                         >
-                          <i className="fas fa-edit"></i>
+                          <PencilIcon className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(document.id)}
                           className="text-red-600 hover:text-white bg-red-100 hover:bg-red-600 p-2 rounded-full transition-all duration-300 transform hover:scale-110 shadow-sm hover:shadow-md"
                           title="Supprimer ce courrier"
                         >
-                          <i className="fas fa-trash"></i>
+                          <TrashIcon className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
