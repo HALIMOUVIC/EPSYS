@@ -94,6 +94,59 @@ const CourrierArriveeList = () => {
     return new Date(dateString).toLocaleDateString('fr-FR');
   };
 
+  const getFileExtension = (filename) => {
+    return filename.split('.').pop().toLowerCase();
+  };
+
+  const getFileIcon = (extension) => {
+    switch (extension) {
+      case 'pdf':
+        return 'fas fa-file-pdf text-red-500';
+      case 'doc':
+      case 'docx':
+        return 'fas fa-file-word text-blue-500';
+      case 'xls':
+      case 'xlsx':
+        return 'fas fa-file-excel text-green-500';
+      default:
+        return 'fas fa-file text-gray-500';
+    }
+  };
+
+  const downloadFile = async (filePath, originalName) => {
+    try {
+      console.log('Downloading file:', originalName);
+      console.log('File path:', filePath);
+      
+      // Extract relative path from absolute path if needed
+      let relativePath = filePath;
+      if (filePath.includes('/uploads/')) {
+        relativePath = filePath.split('/uploads/')[1];
+      }
+      
+      console.log('Using relative path:', relativePath);
+      
+      const response = await axios.get(`/documents/download/${encodeURIComponent(relativePath)}`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', originalName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      ModernAlert.success('Téléchargement', `Fichier "${originalName}" téléchargé avec succès`);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      ModernAlert.error('Erreur', 'Erreur lors du téléchargement du fichier');
+    }
+  };
+
   const filteredDocuments = documents.filter(doc => {
     const searchLower = searchTerm.toLowerCase();
     return (
