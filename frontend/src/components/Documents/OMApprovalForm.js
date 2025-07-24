@@ -156,283 +156,361 @@ const OMApprovalForm = ({ onClose, onSave }) => {
   };
 
   const generatePrintableDocument = () => {
-    // Create printable HTML document matching the PHP template exactly
+    // Create printable HTML document using the exact A4 template provided
     const printContent = `
       <!DOCTYPE html>
       <html lang="fr">
-        <head>
+      <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Ordre de Mission Interne</title>
           <style>
-            body {
-              margin: 0;
-              padding: 20px;
-              font-family: Arial, sans-serif;
-              font-size: 12px;
-              line-height: 1.4;
-            }
-            
-            .a4 {
-              width: 210mm;
-              min-height: 297mm;
-              margin: 0 auto;
-              padding: 20px;
-              box-sizing: border-box;
-            }
-            
-            .header {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-              margin-bottom: 30px;
-              border-bottom: 2px solid #000;
-              padding-bottom: 15px;
-            }
-            
-            .logo {
-              width: 80px;
-              height: 80px;
-              object-fit: contain;
-            }
-            
-            .header-text {
-              flex: 1;
-              text-align: left;
-              margin-left: 20px;
-            }
-            
-            .linelft {
-              margin: 2px 0;
-              font-weight: bold;
-              font-size: 11px;
-            }
-            
-            .direct-text {
-              text-align: right;
-            }
-            
-            .direct-text h3 {
-              margin: 0;
-              font-size: 14px;
-            }
-            
-            .ftntbl {
-              white-space: nowrap;
-              vertical-align: middle;
-              padding-right: 5px;
-              font-weight: bold;
-            }
-            
-            .blueTable {
-              width: 100%;
-              table-layout: fixed;
-              border-collapse: collapse;
-              margin: 20px 0;
-            }
-            
-            .blueTable td {
-              vertical-align: middle;
-              padding: 8px 4px;
-              border: 1px solid #000;
-              font-size: 11px;
-            }
-            
-            .blueTable td:first-child {
-              width: 20%;
-              background-color: #f0f0f0;
-            }
-            
-            .blueTable td:nth-child(2) {
-              width: 40%;
-            }
-            
-            .blueTable td:nth-child(3) {
-              width: 20%;
-              background-color: #f0f0f0;
-            }
-            
-            .blueTable td:nth-child(4) {
-              width: 20%;
-            }
-            
-            .action-row .action-label {
-              vertical-align: top;
-              padding-top: 4px;
-            }
-            
-            .blueTable2 {
-              width: 100%;
-              border-collapse: collapse;
-              margin: 20px 0;
-            }
-            
-            .blueTable2 th,
-            .blueTable2 td {
-              border: 1px solid #000;
-              padding: 20px 10px;
-              text-align: center;
-              font-weight: bold;
-              font-size: 11px;
-            }
-            
-            .blueTable2 thead th {
-              background-color: #f0f0f0;
-              padding: 10px;
-            }
-            
-            .blueTable2 tbody th {
-              height: 60px;
-            }
-            
-            .PRF {
-              margin-top: 30px;
-              font-size: 10px;
-            }
-            
-            .PRF u {
-              font-weight: bold;
-            }
-            
-            .PRF p {
-              margin: 10px 0;
-              text-align: justify;
-            }
-            
-            @media print {
-              body { margin: 0; }
-              .a4 { margin: 0; padding: 15mm; }
-            }
+              /************************************************/
+              body{
+                  padding: 0;
+                  margin: 0;
+                  font-family:Arial,sans-serif;
+                  background-color:#f5f5f5;
+              }
+              /************************************************/
+              .a4{
+                  width: 210mm; /* A4 width in millimeters */
+                  height: 297mm; /* A4 height in millimeters */
+                  margin: auto; /* Centering the paper on the page */
+                  margin:auto;
+                  padding: 20mm;
+                  background-color:white;
+                  border: 1px solid #ddd;
+                  border-image:none;
+                  box-shadow: 0 0 5mm rgba(0,0,0,.1);
+                  font-family: Arial, sans-serif;
+              }
+              /************************************************/
+              .header{
+                  display: flex;
+                  justify-content: left;
+                  align-items: start;
+                  text-align: center;
+              }
+              .logo{
+                  width:100px;
+                  height: auto;
+                  margin-left: 0px;
+              }
+              /************************************************/
+              .header-text{
+                  position: absolute;
+                  margin-top: 90px;
+                  text-align: center;
+                  line-height: 1px;
+                  font-size: 16px;
+              }
+              /********************************************/
+              .linelft{
+                  margin: 19px 0;
+                  display: flex;
+                  justify-content: space-between;
+              }
+              .direct-text{
+              margin: 10% 0 0 50%;    
+              }
+              .objetomi h4{
+                  font-size: 18px;
+                  padding: 5% 0;
+              }
+              /************************************************/
+              .content{
+                  margin-left:0;
+                  margin-bottom:.520833333in;
+                  margin-top:.520833333in;
+                  font-size:1.125pc;
+              }
+              table.blueTable {
+                  width: 100%;
+                  text-align: left;
+                  border-collapse: collapse;
+                  text-transform: uppercase;
+                }
+                table.blueTable td, table.blueTable th {
+                  padding: 8px 1px;
+                }
+                table.blueTable tbody td {
+                  font-size: 16px;
+                }
+                table.blueTable tfoot td {
+                  font-size: 16px;
+                }
+                table.blueTable tfoot .links {
+                  text-align: right;
+                }
+                table.blueTable tfoot .links a{
+                  display: inline-block;
+                  background: #1C6EA4;
+                  color: #FFFFFF;
+                  padding: 2px 8px;
+                  border-radius: 5px;
+                }
+              table{
+                  width: 100%;
+                  border-collapse: collapse;
+              }
+              table tbody tr td{
+                  padding: 8px;
+              }
+              .ftntbl{
+                  font-weight: bold;
+                  text-transform: none;
+                  white-space: nowrap;
+                  vertical-align: middle;
+                  padding-right: 5px;
+              }
+              /*sign*/
+              .blueTable2{
+                  overflow: auto;
+                  width: 100%;
+              }
+              .blueTable2 thead th{
+                  border: #000 1px solid;
+              }
+              .blueTable2 tbody th{
+                  border-top: #000 1px solid ;
+                  border-right: #000 1px solid ;
+                  border-bottom: none ;
+                  border-left: #000 1px solid ;
+              }
+              .blueTable2 tbody th span{
+                  display: block;
+                  height: 180px;
+                  margin: 5px;
+                  text-align: right;
+              }
+              .blueTable2 tfoot th{
+                  border-top: none ;
+                  border-right: #000 1px solid ;
+                  border-bottom: #000 1px solid ;
+                  border-left: #000 1px solid ;
+                  text-align: left;
+              }
+              .PRF{
+                  padding: 5px;
+                  margin: 5px;
+              }
+              .PRF span{
+                  font-size: 16px;
+                  font-weight: bold;
+              }
+              .PRF p{
+                  display: inline;
+                  font-size: 14px;
+                  padding-bottom: 1rem;
+              }
+              
+              /* Ensure table cells have consistent height */
+              .blueTable td {
+                  vertical-align: middle;
+                  padding: 4px;
+              }
+              
+              /* Fix for the Matricule alignment */
+              #Matricule {
+                  vertical-align: middle;
+              }
+              
+              /* Custom handling for Action à réaliser content */
+              .action-container {
+                  display: inline-block;
+                  vertical-align: middle;
+                  max-width: 100%;
+              }
+              
+              /* Making sure table has proper width */
+              .blueTable {
+                  width: 100%;
+                  table-layout: fixed;
+                  border-collapse: collapse;
+              }
+              
+              /* Set widths for better layout */
+              .blueTable td:first-child {
+                  width: 20%;
+              }
+              
+              .blueTable td:nth-child(2) {
+                  width: 40%;
+              }
+              
+              .blueTable td:nth-child(3) {
+                  width: 20%;
+              }
+              
+              .blueTable td:nth-child(4) {
+                  width: 20%;
+              }
+              
+              /* Specific styling for the action row */
+              .action-row .action-label {
+                  vertical-align: top;
+                  padding-top: 4px;
+              }
+              
+              @media print {
+                  body { 
+                      background-color: white !important;
+                      margin: 0;
+                      padding: 0;
+                  }
+                  .a4 { 
+                      margin: 0; 
+                      padding: 15mm;
+                      border: none;
+                      box-shadow: none;
+                      width: 210mm;
+                      height: 297mm;
+                  }
+              }
           </style>
-        </head>
-        <body>
+      </head>
+      <body>
           <div class="a4">
-            <div class="header">
-              <div style="width: 80px; height: 80px; border: 2px solid #000; display: flex; align-items: center; justify-content: center; font-weight: bold;">LOGO</div>
-              <div class="header-text">
-                <div class="linelft">Activité Exploration-Production</div>
-                <div class="linelft">Division Production</div>
-                <div class="linelft">Direction Regionale In Amenas</div>
-                <div class="linelft">Division .......ENP...</div>
+              <div class="header">
+                  <div style="width: 100px; height: 80px; border: 2px solid #000; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px;">LOGO</div>
+                  <div class="header-text">
+                      <div class="linelft">Activité Exploration-Production</div>
+                      <div class="linelft">Division Production</div>
+                      <div class="linelft">Direction Regionale In Amenas</div>
+                      <div class="linelft">Division .......ENP...</div>
+                  </div>
+                  <div class="direct-text">
+                      <h3><strong>Monsieur le Directeur Régional</strong></h3>
+                  </div>
               </div>
-              <div class="direct-text">
-                <h3><strong>Monsieur le Directeur Régional</strong></h3>
+              <br><br><br><br>
+              <div>
+                  <h4><u>Objet:</u><span> Demande d'approbation de départ en mission</span></h4>
               </div>
-            </div>
-            
-            <br><br><br><br>
-            
-            <div>
-              <h4><u>Objet:</u><span> Demande d'approbation de départ en mission</span></h4>
-            </div>
-            
-            <div class="content">
-              <table class="blueTable">
-                <tbody>
-                  <tr>
-                    <td class="ftntbl">Monsieur :</td>
-                    <td>${formData.fullName}</td>
-                    <td class="ftntbl">Matricule :</td>
-                    <td>${formData.matricule}</td>
-                  </tr>
-                  <tr>
-                    <td class="ftntbl">Fonction :</td>
-                    <td>${formData.jobTitle}</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                  </tr>
-                  <tr>
-                    <td class="ftntbl">Structure :</td>
-                    <td>${formData.division}</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                  </tr>
-                  <tr>
-                    <td class="ftntbl">Itinéraire :</td>
-                    <td>${formData.itineraire}</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                  </tr>
-                  <tr>
-                    <td class="ftntbl">Mission :</td>
-                    <td>du&nbsp;<span>${new Date(formData.dateDepart).toLocaleDateString('fr-FR')}</span>&nbsp;au&nbsp;<span>${new Date(formData.dateRetour).toLocaleDateString('fr-FR')}</span></td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                  </tr>
-                  <tr>
-                    <td class="ftntbl">Transport :</td>
-                    <td>${formData.transport}</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                  </tr>
-                  <tr class="action-row">
-                    <td class="ftntbl action-label">Action à réaliser :</td>
-                    <td colspan="3">
-                      ${(() => {
-                        const text = formData.objet;
-                        const words = text.split(' ');
-                        const firstLine = [];
-                        const secondLine = [];
-                        let charCount = 0;
-                        
-                        words.forEach(word => {
-                          if(charCount < 60) {
-                            firstLine.push(word);
-                            charCount += word.length + 1;
-                          } else {
-                            secondLine.push(word);
-                          }
-                        });
-                        
-                        let result = firstLine.join(' ');
-                        if(secondLine.length > 0) {
-                          result += '<br>' + secondLine.join(' ');
-                        }
-                        return result;
-                      })()}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              
-              <br>
-              
-              <table class="blueTable2">
-                <thead>
-                  <tr>
-                    <th>Le Chef de Division EP</th>
-                    <th>Avis de Monsieur Le Directeur Régional</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <th><span></span></th>
-                    <th><span></span></th>
-                  </tr>
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <th><span class="ftntbl">Date :</span><span>${new Date().toLocaleDateString('fr-FR')}</span></th>
-                    <th><span></span></th>
-                  </tr>
-                </tfoot>
-              </table>
-              
-              <br>
-              
-              <div class="PRF">
-                <span><u>NB</u></span>
-                <p>Toute demande doit être adressée à la Direction Régionale soixante-douze (72) heures à l'avance sauf cas express.</p>
-                <br><br>
-                <p>(*) Enumérer les actions à réaliser lors de la mission.</p>
+              <div class="content">
+                  <table class="blueTable">
+                      <tbody>
+                          <tr>
+                              <td class="ftntbl">Monsieur :</td>
+                              <td id="fullName">${formData.fullName}</td>
+                              <td class="ftntbl">Matricule :</td>
+                              <td id="Matricule">${formData.matricule}</td>
+                          </tr>
+                          <tr>
+                              <td class="ftntbl">Fonction :</td>
+                              <td id="jobTitle">${formData.jobTitle}</td>
+                              <td>&nbsp;</td>
+                              <td>&nbsp;</td>
+                          </tr>
+                          <tr>
+                              <td class="ftntbl">Structure :</td>
+                              <td id="division">${formData.division}</td>
+                              <td>&nbsp;</td>
+                              <td>&nbsp;</td>
+                          </tr>
+                          <tr>
+                              <td class="ftntbl">Itinéraire :</td>
+                              <td id="itineraire">${formData.itineraire}</td>
+                              <td>&nbsp;</td>
+                              <td>&nbsp;</td>
+                          </tr>
+                          <tr>
+                              <td class="ftntbl">Mission :</td>
+                              <td>du&nbsp;<span id="date-depart">${new Date(formData.dateDepart).toLocaleDateString('fr-FR')}</span>&nbsp;au&nbsp;<span id="date-retour">${new Date(formData.dateRetour).toLocaleDateString('fr-FR')}</span></td>
+                              <td>&nbsp;</td>
+                              <td>&nbsp;</td>
+                          </tr>
+                          <tr>
+                              <td class="ftntbl">Transport :</td>
+                              <td id="transport">${formData.transport}</td>
+                              <td>&nbsp;</td>
+                              <td>&nbsp;</td>
+                          </tr>
+                          <tr class="action-row">
+                              <td class="ftntbl action-label">Action à réaliser :</td>
+                              <td colspan="3">
+                                  ${(() => {
+                                      const text = formData.objet;
+                                      const words = text.split(' ');
+                                      const firstLine = [];
+                                      const secondLine = [];
+                                      let charCount = 0;
+                                      
+                                      // Approximately determine first line (adjust number as needed)
+                                      words.forEach(word => {
+                                          if(charCount < 60) { // Approximate character limit for first line
+                                              firstLine.push(word);
+                                              charCount += word.length + 1;
+                                          } else {
+                                              secondLine.push(word);
+                                          }
+                                      });
+                                      
+                                      let result = firstLine.join(' ');
+                                      if(secondLine.length > 0) {
+                                          result += '<br>' + secondLine.join(' ');
+                                      }
+                                      return result;
+                                  })()}
+                              </td>
+                          </tr>
+                      </tbody>
+                  </table>
+                  <br>
+                  <table class="blueTable2">
+                      <thead>
+                          <tr>
+                              <th>Le Chef de Division EP</th>
+                              <th>Avis de Monsieur Le Directeur Régional</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <tr>
+                              <th><span></span></th>
+                              <th><span></span></th>
+                          </tr>
+                      </tbody>
+                      <tfoot>
+                          <tr>
+                              <th><span class="ftntbl">Date :</span><span id="Date">${new Date().toLocaleDateString('fr-FR')}</span></th>
+                              <th><span></span></th>
+                          </tr>
+                      </tfoot>
+                  </table>
+                  <br>
+                  <div class="PRF">
+                      <span><u>NB</u></span>
+                      <p>Toute demande doit être adressée à la Direction Régionale soixante-douze (72) heures à l'avance sauf cas express.</p>
+                      <br><br>
+                      <p>(*) Enumérer les actions à réaliser lors de la mission.</p>
+                  </div>
               </div>
-            </div>
+
+              <script>
+              window.addEventListener('beforeprint', function() {
+                  const footer = document.createElement('div');
+                  footer.style.position = 'fixed';
+                  footer.style.bottom = '30px'; // Distance from the bottom
+                  footer.style.right = '35px'; // Moved 25px to the left
+                  footer.style.fontSize = '8px'; // Smallest font size
+                  footer.style.color = '#000'; // Black color
+                  footer.style.margin = '0';
+                  footer.style.textAlign = 'right';
+                  footer.innerText = 'Approbation Printed by ENP Application @2025';
+
+                  document.body.appendChild(footer);
+              });
+
+              window.addEventListener('afterprint', function() {
+                  const footer = document.querySelector('div[style*="position: fixed"]');
+                  if (footer) {
+                      document.body.removeChild(footer);
+                  }
+              });
+              </script>
           </div>
-          
-          <div style="position: fixed; bottom: 30px; right: 35px; font-size: 8px; color: #000;">
-            Approbation Printed by ENP Application @2025
-          </div>
-        </body>
+      </body>
       </html>
     `;
 
