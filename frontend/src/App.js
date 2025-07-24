@@ -190,10 +190,7 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <MainLayout title="Calendar" subtitle="Schedule and deadlines">
-                <div className="bg-white rounded-xl p-8 shadow-lg text-center">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Calendar</h2>
-                  <p className="text-gray-600">Calendar feature coming soon...</p>
-                </div>
+                <Calendar />
               </MainLayout>
             </ProtectedRoute>
           }
