@@ -65,14 +65,29 @@ const CourrierArriveeList = () => {
   };
 
   const handleFormSave = () => {
+    fetchDocuments();
     setShowForm(false);
     setEditingDocument(null);
-    fetchDocuments();
   };
 
   const handleEdit = (document) => {
     setEditingDocument(document);
     setShowForm(true);
+  };
+
+  const handleView = (document) => {
+    setViewingDocument(document);
+    setShowViewModal(true);
+  };
+
+  const handleViewClose = () => {
+    setShowViewModal(false);
+    setViewingDocument(null);
+  };
+
+  const handleFormClose = () => {
+    setShowForm(false);
+    setEditingDocument(null);
   };
 
   const formatDate = (dateString) => {
