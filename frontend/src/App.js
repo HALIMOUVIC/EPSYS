@@ -11,6 +11,7 @@ import DocumentForm from "./components/Documents/DocumentForm";
 import DocumentView from "./components/Documents/DocumentView";
 import CourrierDepartList from "./components/Documents/CourrierDepartList";
 import CourrierArriveeList from "./components/Documents/CourrierArriveeList";
+import DRIDepartList from "./components/Documents/DRIDepartList";
 import OMApprovalList from "./components/Documents/OMApprovalList";
 import Messages from "./components/Messages/Messages";
 import FileManager from "./components/FileManager/FileManager";
