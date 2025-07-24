@@ -876,11 +876,15 @@ async def get_folders(
                                 "path": temp_path
                             })
         
+        # Convert MongoDB documents to Pydantic models to handle ObjectId serialization
+        folder_models = [Folder(**folder) for folder in folders]
+        file_models = [FileItem(**file) for file in files]
+        
         return {
-            "folders": folders,
-            "files": files,
+            "folders": [folder.dict() for folder in folder_models],
+            "files": [file.dict() for file in file_models],
             "current_path": current_path,
-            "current_folder": current_folder_info,
+            "current_folder": Folder(**current_folder_info).dict() if current_folder_info else None,
             "navigation_path": navigation_path,
             "parent_folder_id": current_folder_info["parent_id"] if current_folder_info else None
         }
