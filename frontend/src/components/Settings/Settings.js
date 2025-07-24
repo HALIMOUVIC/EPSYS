@@ -372,17 +372,29 @@ const Settings = () => {
               </div>
               
               {/* Test Button for Session Expiry */}
-              <div className="mt-3">
+              <div className="mt-3 flex space-x-2">
                 <button
                   onClick={forceSessionExpiry}
                   className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
                 >
                   🧪 Tester l'expiration de session
                 </button>
-                <p className="text-xs text-gray-500 mt-1">
-                  Cliquez pour tester immédiatement l'expiration de session
-                </p>
+                
+                <button
+                  onClick={() => {
+                    const status = getSessionStatus();
+                    if (status) {
+                      alert(`Debug Info:\n- Timeout: ${status.sessionTimeout}min\n- Last Activity: ${status.lastActivity}\n- Time Since: ${status.timeSinceLastActivity}s\n- Remaining: ${status.remainingSeconds}s\n- Should Expire: ${status.shouldExpire}`);
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  🔍 Debug Session Status
+                </button>
               </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Test buttons: Red = Force logout, Blue = Show debug info
+              </p>
             </div>
 
             <div className="pt-4 border-t border-gray-200">
