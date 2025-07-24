@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 import uuid
 
 # Configuration
-BACKEND_URL = "https://c63c90c4-ad35-4a7b-afbe-bf1a4ccd1295.preview.emergentagent.com/api"
+BACKEND_URL = "https://b760dca1-4a93-4338-b6c3-a79bea95d81c.preview.emergentagent.com/api"
 HEADERS = {"Content-Type": "application/json"}
 
 class TestResults:
