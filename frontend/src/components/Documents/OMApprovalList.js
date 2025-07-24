@@ -335,6 +335,10 @@ const OMApprovalList = () => {
                 </div>
               </div>
             </div>
+            
+            <div style="position: fixed; bottom: 30px; right: 35px; font-size: 8px; color: #000;">
+              Approbation Printed by ENP Application @2025
+            </div>
           </body>
         </html>
       `;
