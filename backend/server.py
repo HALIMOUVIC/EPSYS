@@ -608,6 +608,27 @@ async def mark_message_read(
     await db.messages.update_one({"id": message_id}, {"$set": {"is_read": True}})
     return {"message": "Message marked as read"}
 
+# Employee Lookup Route
+@api_router.get("/employees/{matricule}")
+async def get_employee_by_matricule(
+    matricule: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get employee data by matricule for auto-populating OM Approval form"""
+    employee = await db.employees.find_one({"matricule": matricule})
+    
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    
+    # Return the employee data in the format expected by the form
+    return {
+        "fullName": f"{employee['full_name']} {employee['full_name1']}",
+        "jobTitle": employee['job_title'],
+        "division": employee['division'],
+        "itineraire": employee['itineraire'],
+        "service": employee['service']
+    }
+
 # Users Management Routes (Admin only)
 @api_router.get("/users", response_model=List[User])
 async def get_users(admin_user: User = Depends(get_admin_user)):
