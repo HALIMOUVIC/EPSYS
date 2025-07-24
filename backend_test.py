@@ -3057,7 +3057,7 @@ def test_signup_toggle_functionality():
     
     # Test 1: Admin can access signup toggle endpoint
     print("\n  Testing admin access to signup toggle...")
-    response = make_request("PUT", "/settings/signup-toggle", {"enabled": True}, auth_token=admin_token)
+    response = make_request("PUT", "/settings/signup-toggle?enabled=true", auth_token=admin_token)
     if response and response.status_code == 200:
         data = response.json()
         if "signup_enabled" in data and data["signup_enabled"] == True:
@@ -3070,7 +3070,7 @@ def test_signup_toggle_functionality():
     
     # Test 2: Admin can disable signup
     print("\n  Testing admin disable signup...")
-    response = make_request("PUT", "/settings/signup-toggle", {"enabled": False}, auth_token=admin_token)
+    response = make_request("PUT", "/settings/signup-toggle?enabled=false", auth_token=admin_token)
     if response and response.status_code == 200:
         data = response.json()
         if "signup_enabled" in data and data["signup_enabled"] == False:
@@ -3083,7 +3083,7 @@ def test_signup_toggle_functionality():
     
     # Test 3: Regular user cannot access signup toggle (should get 403)
     print("\n  Testing user denied access to signup toggle...")
-    response = make_request("PUT", "/settings/signup-toggle", {"enabled": True}, auth_token=user_token)
+    response = make_request("PUT", "/settings/signup-toggle?enabled=true", auth_token=user_token)
     if response and response.status_code == 403:
         results.log_success("Settings - User denied access to signup toggle")
     else:
@@ -3093,13 +3093,13 @@ def test_signup_toggle_functionality():
     # Test 4: Test with both enabled=true and enabled=false parameters
     print("\n  Testing signup toggle with different parameters...")
     test_cases = [
-        {"enabled": True, "expected": True},
-        {"enabled": False, "expected": False},
-        {"enabled": True, "expected": True}
+        {"enabled": "true", "expected": True},
+        {"enabled": "false", "expected": False},
+        {"enabled": "true", "expected": True}
     ]
     
     for i, test_case in enumerate(test_cases):
-        response = make_request("PUT", "/settings/signup-toggle", {"enabled": test_case["enabled"]}, auth_token=admin_token)
+        response = make_request("PUT", f"/settings/signup-toggle?enabled={test_case['enabled']}", auth_token=admin_token)
         if response and response.status_code == 200:
             data = response.json()
             if data.get("signup_enabled") == test_case["expected"]:
@@ -3112,7 +3112,7 @@ def test_signup_toggle_functionality():
     
     # Test 5: Verify signup toggle without authentication (should fail)
     print("\n  Testing signup toggle without authentication...")
-    response = make_request("PUT", "/settings/signup-toggle", {"enabled": True})
+    response = make_request("PUT", "/settings/signup-toggle?enabled=true")
     if response and response.status_code in [401, 403]:
         results.log_success("Settings - Signup toggle requires authentication")
     else:
