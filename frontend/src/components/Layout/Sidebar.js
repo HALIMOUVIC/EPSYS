@@ -22,6 +22,7 @@ const Sidebar = () => {
   const { user, logout, isAdmin } = useAuth();
   const { t, isRTL } = useLanguage();
   const location = useLocation();
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const navigationItems = [
     { name: t('dashboard'), href: '/', icon: HomeIcon },
