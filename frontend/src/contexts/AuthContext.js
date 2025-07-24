@@ -76,6 +76,29 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user]);
 
+  const checkAuthStatus = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const storedUser = localStorage.getItem('user');
+      
+      if (token && storedUser) {
+        setUser(JSON.parse(storedUser));
+        
+        // Verify token is still valid
+        const response = await axios.get('/me');
+        if (response.data) {
+          setUser(response.data);
+          localStorage.setItem('user', JSON.stringify(response.data));
+        }
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      logout();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadSessionTimeout = async () => {
     try {
       if (user) {
