@@ -1401,7 +1401,7 @@ def test_file_manager_renaming():
     new_name = "renamed_test_file.txt"
     rename_data = {'new_name': new_name}
     
-    response = make_request("PUT", f"/file-manager/files/{file_id}", data=rename_data, auth_token=user_token)
+    response = make_request("PUT", f"/file-manager/files/{file_id}", files=rename_data, auth_token=user_token)
     if response and response.status_code == 200:
         file_info = response.json()
         if (file_info["name"] == new_name and 
@@ -1418,7 +1418,7 @@ def test_file_manager_renaming():
     print("\n  Testing rename with empty name...")
     empty_name_data = {'new_name': ''}
     
-    response = make_request("PUT", f"/file-manager/files/{file_id}", data=empty_name_data, auth_token=user_token)
+    response = make_request("PUT", f"/file-manager/files/{file_id}", files=empty_name_data, auth_token=user_token)
     if response and response.status_code == 400:
         results.log_success("File Manager Rename - Empty name rejection")
     else:
@@ -1429,7 +1429,7 @@ def test_file_manager_renaming():
     print("\n  Testing rename with whitespace-only name...")
     whitespace_name_data = {'new_name': '   '}
     
-    response = make_request("PUT", f"/file-manager/files/{file_id}", data=whitespace_name_data, auth_token=user_token)
+    response = make_request("PUT", f"/file-manager/files/{file_id}", files=whitespace_name_data, auth_token=user_token)
     if response and response.status_code == 400:
         results.log_success("File Manager Rename - Whitespace name rejection")
     else:
@@ -1460,7 +1460,7 @@ def test_file_manager_renaming():
                 # Try to rename admin's file as regular user (should fail)
                 unauthorized_rename_data = {'new_name': 'hacked_file.txt'}
                 response = make_request("PUT", f"/file-manager/files/{admin_file_id}", 
-                                      data=unauthorized_rename_data, auth_token=user_token)
+                                      files=unauthorized_rename_data, auth_token=user_token)
                 
                 if response and response.status_code == 403:
                     results.log_success("File Manager Rename - Permission check (user cannot rename admin file)")
@@ -1478,7 +1478,7 @@ def test_file_manager_renaming():
     print("\n  Testing admin can rename any file...")
     admin_rename_data = {'new_name': 'admin_renamed_file.txt'}
     
-    response = make_request("PUT", f"/file-manager/files/{file_id}", data=admin_rename_data, auth_token=admin_token)
+    response = make_request("PUT", f"/file-manager/files/{file_id}", files=admin_rename_data, auth_token=admin_token)
     if response and response.status_code == 200:
         file_info = response.json()
         if file_info["name"] == "admin_renamed_file.txt":
@@ -1494,7 +1494,7 @@ def test_file_manager_renaming():
     fake_file_id = str(uuid.uuid4())
     fake_rename_data = {'new_name': 'fake_file.txt'}
     
-    response = make_request("PUT", f"/file-manager/files/{fake_file_id}", data=fake_rename_data, auth_token=user_token)
+    response = make_request("PUT", f"/file-manager/files/{fake_file_id}", files=fake_rename_data, auth_token=user_token)
     if response and response.status_code == 404:
         results.log_success("File Manager Rename - Non-existent file handling")
     else:
@@ -1505,7 +1505,7 @@ def test_file_manager_renaming():
     print("\n  Testing response includes updated file information...")
     final_rename_data = {'new_name': 'final_test_file.txt'}
     
-    response = make_request("PUT", f"/file-manager/files/{file_id}", data=final_rename_data, auth_token=user_token)
+    response = make_request("PUT", f"/file-manager/files/{file_id}", files=final_rename_data, auth_token=user_token)
     if response and response.status_code == 200:
         file_info = response.json()
         required_fields = ["id", "name", "original_name", "file_path", "folder_id", "file_size", 
