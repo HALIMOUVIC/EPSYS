@@ -193,9 +193,16 @@ export const LanguageProvider = ({ children }) => {
     return translations[currentLanguage]?.[key] || translations.fr[key] || key;
   };
 
+  const syncWithUserSettings = (userLanguage) => {
+    if (userLanguage && userLanguage !== currentLanguage) {
+      changeLanguage(userLanguage);
+    }
+  };
+
   const value = {
     currentLanguage,
     changeLanguage,
+    syncWithUserSettings,
     t,
     isRTL
   };
